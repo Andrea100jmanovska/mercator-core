@@ -365,23 +365,6 @@ public class UserService {
     }
 
 
-    public boolean sendEmailForAnalyzing(String to, String subject, String text) {
-        MimeMessage message = mailSender.createMimeMessage();
-         try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(systemSettingsService.getSystemSettingsPropByKey(BasicSystemSettingsProps.SMTP_USERNAME).getValue());
-            helper.setTo("ppetko901@gmail.com");
-            helper.setSubject(subject);
-            helper.setText(text, true);
-
-            mailSender.send(message);
-            return true;
-        } catch (Exception e) {
-            System.err.println("Error sending email: " + e.getMessage());
-            return false;
-        }
-    }
-
     private void checkSanitization(EditUserRequest request) {
         List<String> sanitizedFields = new ArrayList<>();
 

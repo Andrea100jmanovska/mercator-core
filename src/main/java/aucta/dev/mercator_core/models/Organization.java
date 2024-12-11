@@ -18,7 +18,6 @@ import java.io.Serializable;
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "organization")
 public class Organization extends AbstractEntity implements Serializable{
 
-
     @Column(name = "NAME")
     private String name;
 
@@ -30,7 +29,6 @@ public class Organization extends AbstractEntity implements Serializable{
 
     @Column(name = "ORGANIZATION_TYPE")
     private OrganizationType type;
-
 
     public Organization toOrganizationDTO() {
         Organization organization = new Organization();
