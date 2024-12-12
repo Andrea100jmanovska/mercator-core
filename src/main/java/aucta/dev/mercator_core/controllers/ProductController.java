@@ -5,6 +5,7 @@ import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.services.ProductService;
+import aucta.dev.mercator_core.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,8 @@ public class ProductController {
     private ProductService productService;
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private UserService userService;
 
     @Secured({"ROLE_ADMINISTRATION"})
     @RequestMapping(method = RequestMethod.GET)
@@ -67,6 +70,7 @@ public class ProductController {
                                                 @RequestParam("discount") Integer discount,
                                                 @RequestParam("quantity") Integer quantity,
                                                 @RequestParam("category") CategoryType category,
+                                                @RequestParam("deliveryPrice") Double deliveryPrice,
                                                 @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
             Product product = new Product();
@@ -76,7 +80,9 @@ public class ProductController {
             product.setDiscount(discount);
             product.setQuantity(quantity);
             product.setCategory(category);
-
+            product.setDeliveryPrice(deliveryPrice);
+            product.setTotalPrice((1-(product.getDiscount()/100.00)) * product.getPrice() + product.getDeliveryPrice());
+            product.setUser(userService.getCurrentUser());
             if (image != null) {
                 byte[] imageBytes = image.getBytes();
                 product.setImage(imageBytes);
