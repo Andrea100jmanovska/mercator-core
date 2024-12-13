@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Transactional
     public Page<ProductDTO> getAll(Map<String, String> params, Pageable pageable) throws ParseException {
         ProductSpecification productSpecification = new ProductSpecification();
         Iterator<Map.Entry<String, String>> iterator = params.entrySet().iterator();
@@ -79,7 +81,7 @@ public class ProductService {
             dto.setDiscount(product.getDiscount());
             dto.setDeliveryPrice(product.getDeliveryPrice());
             dto.setTotalPrice(product.getTotalPrice());
-            dto.setImage(product.getImage());
+            dto.setImages(product.getImages());
             dto.setUser(product.getUser());
             dtos.add(dto);
         }
@@ -97,6 +99,7 @@ public class ProductService {
         return productRepository.findAll();
     }
 
+    @Transactional
     public Product createProduct(Product product){
         return productRepository.save(product);
     }

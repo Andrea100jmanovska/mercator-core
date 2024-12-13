@@ -7,7 +7,9 @@ import lombok.Setter;
 import org.hibernate.envers.Audited;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -40,9 +42,8 @@ public class Product extends AbstractEntity implements Serializable {
     @Column(name = "TOTAL_PRICE")
     private Double totalPrice;
 
-    @Lob
-    @Column(name = "IMAGE")
-    private byte[] image;
+    @OneToMany(mappedBy = "product",cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    private List<Image> images = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "USER_ID")

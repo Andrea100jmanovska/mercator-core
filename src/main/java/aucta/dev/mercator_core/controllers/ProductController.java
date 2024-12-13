@@ -2,6 +2,7 @@ package aucta.dev.mercator_core.controllers;
 
 import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.exceptions.BadRequestError;
+import aucta.dev.mercator_core.models.Image;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.services.ProductService;
@@ -65,14 +66,14 @@ public class ProductController {
     @Secured({"ROLE_ADMINISTRATION"})
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<String> createProduct(
-                                                @RequestParam("name") String name,
-                                                @RequestParam("description") String description,
-                                                @RequestParam("price") Double price,
-                                                @RequestParam("discount") Integer discount,
-                                                @RequestParam("quantity") Integer quantity,
-                                                @RequestParam("category") CategoryType category,
-                                                @RequestParam("deliveryPrice") Double deliveryPrice,
-                                                @RequestParam(value = "image", required = false) MultipartFile image) {
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("price") Double price,
+            @RequestParam("discount") Integer discount,
+            @RequestParam("quantity") Integer quantity,
+            @RequestParam("category") CategoryType category,
+            @RequestParam("deliveryPrice") Double deliveryPrice,
+            @RequestParam(value = "images", required = false) MultipartFile[] images) {
         try {
             Product product = new Product();
             product.setName(name);
@@ -82,18 +83,26 @@ public class ProductController {
             product.setQuantity(quantity);
             product.setCategory(category);
             product.setDeliveryPrice(deliveryPrice);
-            product.setTotalPrice((1-(product.getDiscount()/100.00)) * product.getPrice() + product.getDeliveryPrice());
+            product.setTotalPrice((1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice());
             product.setUser(userService.getCurrentUser());
-            if (image != null) {
-                byte[] imageBytes = image.getBytes();
-                product.setImage(imageBytes);
+
+            if (images != null && images.length > 0) {
+                for (MultipartFile image : images) {
+                    byte[] imageBytes = image.getBytes();
+
+                    Image productImage = new Image();
+                    productImage.setImageData(imageBytes);
+                    productImage.setProduct(product);
+
+                    product.getImages().add(productImage);
+                }
             }
 
             productService.createProduct(product);
-            return ResponseEntity.ok("Product successfully created");
+            return ResponseEntity.ok("Product successfully created with images");
 
         } catch (IOException e) {
-            return ResponseEntity.status(500).body("Error processing the image");
+            return ResponseEntity.status(500).body("Error processing the images");
         }
     }
 
