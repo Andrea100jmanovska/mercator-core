@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.HashMap;
 
 @RestController
@@ -37,7 +38,7 @@ public class ProductController {
             @RequestParam(value = "orderBy") String orderBy,
             @RequestParam(value = "orderDirection") String orderDirection,
             @RequestParam(value = "searchParams") String searchParams
-    ) throws IOException {
+    ) throws IOException, ParseException {
         ObjectMapper objectMapper = new ObjectMapper();
         HashMap filterMap = objectMapper.readValue(searchParams, HashMap.class);
         Sort sort;
@@ -46,7 +47,7 @@ public class ProductController {
         } else {
             sort = Sort.by(Sort.Direction.DESC, "dateCreated");
         }
-        return ResponseEntity.ok(productService.all(filterMap, PageRequest.of(page, size, sort)));
+        return ResponseEntity.ok(productService.getAll(filterMap, PageRequest.of(page, size, sort)));
     }
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_ASTA_ADRIA_AGENT"})
