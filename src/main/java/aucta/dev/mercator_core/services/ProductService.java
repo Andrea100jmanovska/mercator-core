@@ -9,14 +9,17 @@ import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.repositories.specifications.ProductSpecification;
 import aucta.dev.mercator_core.repositories.specifications.SearchCriteria;
 import io.micrometer.common.util.StringUtils;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -72,7 +75,6 @@ public class ProductService {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
 
-                    // Map images more concisely
                     dto.setImages(
                             product.getImages().stream()
                                     .map(image -> {
@@ -102,13 +104,58 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public Product getById(String id) {
-        Product product = productRepository.getById(id);
-        return product;
+    @Transactional(readOnly = true)
+    public ProductDTO getById(String id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+        ProductDTO dto = new ProductDTO();
+        BeanUtils.copyProperties(product, dto);
+
+        List<ImageDTO> imageDTOs = product.getImages().stream()
+                .map(image -> {
+                    ImageDTO imageDTO = new ImageDTO();
+                    imageDTO.setId(image.getId());
+                    imageDTO.setImageData(image.getImageData());
+                    return imageDTO;
+
+                })
+                .collect(Collectors.toList());
+
+        dto.setImages(imageDTOs);
+        return dto;
     }
 
-    public Product update(Product product) {
-        return productRepository.save(product);
+    @Transactional
+    public Product update(Product product, List<MultipartFile> images) throws IOException {
+        Product existingProduct = productRepository.findById(product.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+        existingProduct.setName(product.getName());
+        existingProduct.setDescription(product.getDescription());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setDiscount(product.getDiscount());
+        existingProduct.setQuantity(product.getQuantity());
+        existingProduct.setCategory(product.getCategory());
+        existingProduct.setDeliveryPrice(product.getDeliveryPrice());
+        existingProduct.setTotalPrice(
+                (1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice()
+        );
+
+        if (images != null && !images.isEmpty()) {
+            existingProduct.getImages().clear();
+
+            List<Image> productImages = new ArrayList<>();
+            for (MultipartFile imageFile : images) {
+                Image image = new Image();
+                image.setImageData(imageFile.getBytes());
+                image.setProduct(existingProduct);
+                productImages.add(image);
+            }
+            existingProduct.getImages().addAll(productImages);
+        }
+
+        return productRepository.save(existingProduct);
     }
 
     public Boolean delete(String id) {

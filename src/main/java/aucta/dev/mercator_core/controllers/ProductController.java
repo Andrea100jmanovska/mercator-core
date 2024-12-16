@@ -4,10 +4,13 @@ import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.Image;
 import aucta.dev.mercator_core.models.Product;
+import aucta.dev.mercator_core.models.dtos.ImageDTO;
+import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.services.ProductService;
 import aucta.dev.mercator_core.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -20,6 +23,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "/products")
@@ -60,7 +64,7 @@ public class ProductController {
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity getProduct(@PathVariable(value = "id") String id) {
+    public ResponseEntity<ProductDTO> getProduct(@PathVariable(value = "id") String id) {
         return ResponseEntity.ok(productService.getById(id));
     }
 
@@ -108,12 +112,58 @@ public class ProductController {
         }
     }
 
+    private ProductDTO convertToDto(Product product) {
+        ProductDTO dto = new ProductDTO();
+        BeanUtils.copyProperties(product, dto);
+
+        List<ImageDTO> imageDTOs = product.getImages().stream()
+                .map(image -> {
+                    ImageDTO imageDTO = new ImageDTO();
+                    imageDTO.setId(image.getId());
+                    imageDTO.setImageData(image.getImageData());
+                    return imageDTO;
+                })
+                .collect(Collectors.toList());
+
+        dto.setImages(imageDTOs);
+        return dto;
+    }
+
     @Secured({"ROLE_ADMINISTRATION"})
     @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity update(@RequestBody Product product) throws BadRequestError {
-       // validator.validateUpdate(bank);
-        return ResponseEntity.ok(productService.update(product));
+    public ResponseEntity<ProductDTO> update(
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("price") Double price,
+            @RequestParam("discount") Integer discount,
+            @RequestParam("quantity") Integer quantity,
+            @RequestParam("category") CategoryType category,
+            @RequestParam("deliveryPrice") Double deliveryPrice,
+            @RequestParam("id") String id,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images
+    ) throws BadRequestError {
+        try {
+            // Create a product object with the provided details
+            Product product = new Product();
+            product.setId(id);
+            product.setName(name);
+            product.setDescription(description);
+            product.setPrice(price);
+            product.setDiscount(discount);
+            product.setQuantity(quantity);
+            product.setCategory(category);
+            product.setDeliveryPrice(deliveryPrice);
+
+            Product updatedProduct = productService.update(product, images);
+
+            ProductDTO dto = convertToDto(updatedProduct);
+            return ResponseEntity.ok(dto);
+        } catch (IOException e) {
+            throw new BadRequestError("Error processing images");
+        }
     }
+
+
 
     @Secured({"ROLE_ADMINISTRATION"})
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
