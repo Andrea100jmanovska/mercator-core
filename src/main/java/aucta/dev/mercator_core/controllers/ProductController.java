@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/products")
@@ -31,7 +32,7 @@ public class ProductController {
     @Autowired
     private UserService userService;
 
-    @Secured({"ROLE_ADMINISTRATION"})
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity getAll(
             @RequestParam(value = "page") Integer page,
@@ -51,13 +52,13 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAll(filterMap, PageRequest.of(page, size, sort)));
     }
 
-    @Secured({"ROLE_ADMINISTRATION", "ROLE_ASTA_ADRIA_AGENT"})
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_MERCATOR_AGENT", "ROLE_CLIENT"})
     @RequestMapping(path = "/all",method = RequestMethod.GET)
     public ResponseEntity getAllProductsWithoutPaging() throws IOException {
         return ResponseEntity.ok(productService.getAll());
     }
 
-    @Secured({"ROLE_ADMINISTRATION"})
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
     public ResponseEntity getProduct(@PathVariable(value = "id") String id) {
         return ResponseEntity.ok(productService.getById(id));
@@ -73,7 +74,8 @@ public class ProductController {
             @RequestParam("quantity") Integer quantity,
             @RequestParam("category") CategoryType category,
             @RequestParam("deliveryPrice") Double deliveryPrice,
-            @RequestParam(value = "images", required = false) MultipartFile[] images) {
+            @RequestParam("images") List<MultipartFile> images
+    ) {
         try {
             Product product = new Product();
             product.setName(name);
@@ -86,10 +88,9 @@ public class ProductController {
             product.setTotalPrice((1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice());
             product.setUser(userService.getCurrentUser());
 
-            if (images != null && images.length > 0) {
+            if (images != null && !images.isEmpty()) {
                 for (MultipartFile image : images) {
                     byte[] imageBytes = image.getBytes();
-
                     Image productImage = new Image();
                     productImage.setImageData(imageBytes);
                     productImage.setProduct(product);
@@ -99,6 +100,7 @@ public class ProductController {
             }
 
             productService.createProduct(product);
+
             return ResponseEntity.ok("Product successfully created with images");
 
         } catch (IOException e) {

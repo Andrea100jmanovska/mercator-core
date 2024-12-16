@@ -1,12 +1,15 @@
 package aucta.dev.mercator_core.services;
 
 import aucta.dev.mercator_core.enums.SearchOperation;
+import aucta.dev.mercator_core.models.Image;
 import aucta.dev.mercator_core.models.Product;
+import aucta.dev.mercator_core.models.dtos.ImageDTO;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.repositories.specifications.ProductSpecification;
 import aucta.dev.mercator_core.repositories.specifications.SearchCriteria;
 import io.micrometer.common.util.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -14,16 +17,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -37,7 +35,7 @@ public class ProductService {
         Iterator<Map.Entry<String, String>> iterator = params.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
-            if (!org.springframework.util.StringUtils.isEmpty(entry.getKey()) && !StringUtils.isEmpty(entry.getValue()))
+            if (!org.springframework.util.StringUtils.isEmpty(entry.getKey()) && !StringUtils.isEmpty(entry.getValue())) {
                 if (entry.getKey().equals("dateCreated")) {
                     Calendar from = Calendar.getInstance();
                     from.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
@@ -61,39 +59,39 @@ public class ProductService {
 
                     productSpecification.add(new SearchCriteria(entry.getKey(), from.getTime(), SearchOperation.JAVA_UTIL_DATE_GREATER_THAN_EQUAL));
                     productSpecification.add(new SearchCriteria(entry.getKey(), to.getTime(), SearchOperation.JAVA_UTIL_DATE_LESS_THAN_EQUAL));
-                }  else {
+                } else {
                     productSpecification.add(new SearchCriteria(entry.getKey(), entry.getValue(), SearchOperation.MATCH));
                 }
+            }
         }
 
-        List<Product> products = productRepository.findAll(productSpecification);
+        Page<Product> productsPage = productRepository.findAll(productSpecification, pageable);
 
-        List<ProductDTO> dtos = new ArrayList<>();
-        for(Product product : products) {
-            ProductDTO dto = new ProductDTO();
-            dto.setId(product.getId());
-            dto.setName(product.getName());
-            dto.setDescription(product.getDescription());
-            dto.setCategory(product.getCategory());
-            dto.setDateCreated(product.getDateCreated());
-            dto.setPrice(product.getPrice());
-            dto.setQuantity(product.getQuantity());
-            dto.setDiscount(product.getDiscount());
-            dto.setDeliveryPrice(product.getDeliveryPrice());
-            dto.setTotalPrice(product.getTotalPrice());
-            dto.setImages(product.getImages());
-            dto.setUser(product.getUser());
-            dtos.add(dto);
-        }
-        dtos.sort(Comparator.comparing(ProductDTO::getDateCreated).reversed());
+        List<ProductDTO> dtos = productsPage.getContent().stream()
+                .map(product -> {
+                    ProductDTO dto = new ProductDTO();
+                    BeanUtils.copyProperties(product, dto);
 
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), dtos.size());
-        List<ProductDTO> paginatedList = dtos.subList(start, end);
+                    // Map images more concisely
+                    dto.setImages(
+                            product.getImages().stream()
+                                    .map(image -> {
+                                        ImageDTO imageDTO = new ImageDTO();
+                                        imageDTO.setId(image.getId());
+                                        imageDTO.setImageData(image.getImageData());
+                                        return imageDTO;
+                                    })
+                                    .collect(Collectors.toList())
+                    );
 
-        return new PageImpl<>(paginatedList, pageable, dtos.size());
+                    return dto;
+                })
+                .sorted(Comparator.comparing(ProductDTO::getDateCreated).reversed())
+                .collect(Collectors.toList());
 
+        return new PageImpl<>(dtos, pageable, productsPage.getTotalElements());
     }
+
 
     public List<Product> getAll() {
         return productRepository.findAll();

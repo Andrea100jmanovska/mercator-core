@@ -8,7 +8,6 @@ import org.hibernate.envers.Audited;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -18,7 +17,7 @@ import java.util.List;
 @Audited
 public class Product extends AbstractEntity implements Serializable {
 
-    @Column(name = "NAME", unique = true)
+    @Column(name = "NAME")
     private String name;
 
     @Column(name = "CATEGORY")
