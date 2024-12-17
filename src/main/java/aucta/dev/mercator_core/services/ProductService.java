@@ -5,6 +5,7 @@ import aucta.dev.mercator_core.models.Image;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.dtos.ImageDTO;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
+import aucta.dev.mercator_core.repositories.ImageRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.repositories.specifications.ProductSpecification;
 import aucta.dev.mercator_core.repositories.specifications.SearchCriteria;
@@ -31,6 +32,9 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ImageRepository imageRepository;
 
     @Transactional
     public Page<ProductDTO> getAll(Map<String, String> params, Pageable pageable) throws ParseException {
@@ -101,6 +105,7 @@ public class ProductService {
 
     @Transactional
     public Product createProduct(Product product){
+
         return productRepository.save(product);
     }
 
@@ -143,6 +148,8 @@ public class ProductService {
         );
 
         if (images != null && !images.isEmpty()) {
+            imageRepository.deleteByProduct(existingProduct);
+
             existingProduct.getImages().clear();
 
             List<Image> productImages = new ArrayList<>();

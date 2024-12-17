@@ -9,6 +9,7 @@ import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.services.ProductService;
 import aucta.dev.mercator_core.services.UserService;
+import aucta.dev.mercator_core.validators.ProductValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +32,10 @@ public class ProductController {
 
     @Autowired
     private ProductService productService;
+
     @Autowired
-    private ProductRepository productRepository;
+    private ProductValidator productValidator;
+
     @Autowired
     private UserService userService;
 
@@ -79,7 +82,7 @@ public class ProductController {
             @RequestParam("category") CategoryType category,
             @RequestParam("deliveryPrice") Double deliveryPrice,
             @RequestParam("images") List<MultipartFile> images
-    ) {
+    ) throws BadRequestError {
         try {
             Product product = new Product();
             product.setName(name);
@@ -103,6 +106,7 @@ public class ProductController {
                 }
             }
 
+            productValidator.createProductValidation(convertToDto(product));
             productService.createProduct(product);
 
             return ResponseEntity.ok("Product successfully created with images");
@@ -143,7 +147,6 @@ public class ProductController {
             @RequestParam(value = "images", required = false) List<MultipartFile> images
     ) throws BadRequestError {
         try {
-            // Create a product object with the provided details
             Product product = new Product();
             product.setId(id);
             product.setName(name);
@@ -153,6 +156,8 @@ public class ProductController {
             product.setQuantity(quantity);
             product.setCategory(category);
             product.setDeliveryPrice(deliveryPrice);
+
+            productValidator.updateProductValidation(convertToDto(product));
 
             Product updatedProduct = productService.update(product, images);
 
