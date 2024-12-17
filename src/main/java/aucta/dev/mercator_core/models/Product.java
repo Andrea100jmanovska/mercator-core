@@ -44,6 +44,14 @@ public class Product extends AbstractEntity implements Serializable {
     @OneToMany(mappedBy = "product",cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     private List<Image> images = new ArrayList<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "USER_FAVORITES",
+            joinColumns = @JoinColumn(name = "PRODUCT_ID"),
+            inverseJoinColumns = @JoinColumn(name = "USER_ID")
+    )
+    List<User> users;
+
     @ManyToOne
     @JoinColumn(name = "USER_ID")
     private User user;

@@ -56,6 +56,14 @@ public class User extends AbstractEntity implements Serializable {
     )
     private List<Group> groups = new ArrayList<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "USER_FAVORITES",
+            joinColumns = @JoinColumn(name = "USER_ID"),
+            inverseJoinColumns = @JoinColumn(name = "PRODUCT_ID")
+    )
+    private List<Product> favoriteProducts = new ArrayList<>();
+
     @Transient
     private List<Privilege> privileges = new ArrayList<>();
 
@@ -67,5 +75,10 @@ public class User extends AbstractEntity implements Serializable {
         return this.getFirstName() + " " + this.getLastName();
     }
 
+    public void addFavoriteProduct(Product product) {
+        if (!this.favoriteProducts.contains(product)) {
+            this.favoriteProducts.add(product);
+        }
+    }
 
 }

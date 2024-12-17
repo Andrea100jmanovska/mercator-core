@@ -9,8 +9,11 @@ import aucta.dev.mercator_core.enums.MailTemplateType;
 import aucta.dev.mercator_core.enums.SearchOperation;
 import aucta.dev.mercator_core.exceptions.HttpException;
 import aucta.dev.mercator_core.models.*;
+import aucta.dev.mercator_core.models.dtos.ImageDTO;
+import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.models.dtos.UserDTO;
 import aucta.dev.mercator_core.repositories.MailTemplateRepository;
+import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.repositories.UserRepository;
 import aucta.dev.mercator_core.repositories.specifications.*;
 import aucta.dev.mercator_core.utils.BasicSystemSettingsProps;
@@ -18,6 +21,7 @@ import aucta.dev.mercator_core.utils.Crypto;
 import aucta.dev.mercator_core.validators.UserValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -76,6 +80,8 @@ public class UserService {
     String BASE_URL;
 
     private final JavaMailSender mailSender;
+    @Autowired
+    private ProductRepository productRepository;
 
     public UserService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -363,6 +369,116 @@ public class UserService {
 
         return ResponseEntity.ok("User successfully updated!");
     }
+
+
+    @Transactional
+    public ResponseEntity addProductToFavorites(String productId) throws Exception {
+        Optional<User> optionalUser = repo.findById(getUser().getId());
+        if(optionalUser.isEmpty()) throw new Error("User not found!");
+        User user = optionalUser.get();
+        Product product = productRepository.getById(productId);
+
+        if(product == null) throw new Error("Product not found!");
+        if (user.getFavoriteProducts().contains(product)) {
+            throw new Error("Product is already a favorite!");
+        }
+        else{
+            user.addFavoriteProduct(product);
+            repo.save(user);
+            return ResponseEntity.ok("Product added to favorites!");
+        }
+    }
+
+    @Transactional
+    public ResponseEntity removeProductFromFavorites(String productId) throws Exception {
+        Optional<User> optionalUser = repo.findById(getUser().getId());
+        if(optionalUser.isEmpty()) throw new Error("User not found!");
+        User user = optionalUser.get();
+        Product product = productRepository.getById(productId);
+
+        if(product == null) throw new Error("Product not found!");
+        if (!user.getFavoriteProducts().contains(product)) {
+            throw new Error("Product isn't a favorite!");
+        }
+        else{
+            List<Product> favoriteProducts = user.getFavoriteProducts();
+            favoriteProducts.remove(product);
+            user.setFavoriteProducts(favoriteProducts);
+            repo.save(user);
+            return ResponseEntity.ok("Product removed from favorites!");
+        }
+    }
+
+
+    @Transactional
+    public List<ProductDTO> getMyFavoriteProducts() throws Exception {
+        Optional<User> optionalUser = repo.findById(getUser().getId());
+        if (optionalUser.isEmpty()) throw new Error("User not found!");
+        User user = optionalUser.get();
+
+        List<Product> favoriteProducts = user.getFavoriteProducts();
+
+        List<ProductDTO> dtos = favoriteProducts.stream()
+                .map(product -> {
+                    ProductDTO dto = new ProductDTO();
+                    BeanUtils.copyProperties(product, dto);
+                    dto.setIsFavorited(product.getUsers().contains(getCurrentUser()));
+                    dto.setImages(
+                            product.getImages().stream()
+                                    .map(image -> {
+                                        ImageDTO imageDTO = new ImageDTO();
+                                        imageDTO.setId(image.getId());
+                                        imageDTO.setImageData(image.getImageData());
+                                        return imageDTO;
+                                    })
+                                    .collect(Collectors.toList())
+                    );
+
+                    return dto;
+                })
+                .sorted(Comparator.comparing(ProductDTO::getDateCreated).reversed())
+                .collect(Collectors.toList());
+
+        return dtos;
+    }
+
+    @Transactional
+    public Page<ProductDTO> getMyFavoriteProductsPageable(Map<String, String> params, Pageable pageable) throws Exception {
+
+        Optional<User> optionalUser = repo.findById(getUser().getId());
+        if (optionalUser.isEmpty()) throw new Error("User not found!");
+        User user = optionalUser.get();
+
+        List<Product> favoriteProducts = user.getFavoriteProducts();
+
+        int start = (int) pageable.getOffset();
+        int end = (start + pageable.getPageSize()) > favoriteProducts.size() ? favoriteProducts.size() : (start + pageable.getPageSize());
+
+        List<Product> pagedFavoriteProducts = favoriteProducts.subList(start, end);
+
+        List<ProductDTO> dtos = pagedFavoriteProducts.stream()
+                .map(product -> {
+                    ProductDTO dto = new ProductDTO();
+                    BeanUtils.copyProperties(product, dto);
+                    dto.setIsFavorited(product.getUsers().contains(getCurrentUser()));
+                    dto.setImages(
+                            product.getImages().stream()
+                                    .map(image -> {
+                                        ImageDTO imageDTO = new ImageDTO();
+                                        imageDTO.setId(image.getId());
+                                        imageDTO.setImageData(image.getImageData());
+                                        return imageDTO;
+                                    })
+                                    .collect(Collectors.toList())
+                    );
+                    return dto;
+                })
+                .sorted(Comparator.comparing(ProductDTO::getDateCreated).reversed())  // Optional: Sort by dateCreated if needed
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, favoriteProducts.size());
+    }
+
 
 
     private void checkSanitization(EditUserRequest request) {

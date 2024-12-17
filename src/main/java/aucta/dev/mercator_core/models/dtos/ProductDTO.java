@@ -1,6 +1,7 @@
 package aucta.dev.mercator_core.models.dtos;
 
 import aucta.dev.mercator_core.enums.CategoryType;
+import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +21,8 @@ public class ProductDTO {
 
     private String description;
 
+    private Boolean isFavorited;
+
     private Double price;
 
     private Date dateCreated;
@@ -35,4 +38,5 @@ public class ProductDTO {
     private List<ImageDTO> images = new ArrayList<>();
 
     private User user;
+
 }

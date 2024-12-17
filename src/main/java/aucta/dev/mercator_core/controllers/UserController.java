@@ -72,4 +72,44 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(token, request));
     }
 
+
+    @Secured({"ROLE_ADMINISTRATION","ROLE_CAPITELIZE_AGENT", "ROLE_CLIENT_ADMIN", "ROLE_CLIENT"})
+    @RequestMapping(path = "/addProductToFavorites", method = RequestMethod.PUT)
+    public ResponseEntity addProductToFavorite(@RequestParam(value = "productId") String productId
+    ) throws Exception {
+        return ResponseEntity.ok(userService.addProductToFavorites(productId));
+    }
+
+    @Secured({"ROLE_ADMINISTRATION","ROLE_CAPITELIZE_AGENT", "ROLE_CLIENT_ADMIN", "ROLE_CLIENT"})
+    @RequestMapping(path = "/removeProductFromFavorites", method = RequestMethod.PUT)
+    public ResponseEntity removeProductFromFavorites(@RequestParam(value = "productId") String productId
+    ) throws Exception {
+        return ResponseEntity.ok(userService.removeProductFromFavorites(productId));
+    }
+
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
+    @RequestMapping(method = RequestMethod.GET, path = "/myFavoriteProducts")
+    public ResponseEntity getMyFavoriteProducts() throws Exception {
+        return ResponseEntity.ok(userService.getMyFavoriteProducts());
+    }
+
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
+    @RequestMapping(path = "/myFavoriteProductsPageable",method = RequestMethod.GET)
+    public ResponseEntity getMyFavoriteProductsPageable(
+            @RequestParam(value = "page") Integer page,
+            @RequestParam(value = "size") Integer size,
+            @RequestParam(value = "orderBy") String orderBy,
+            @RequestParam(value = "orderDirection") String orderDirection,
+            @RequestParam(value = "searchParams") String searchParams
+    ) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        HashMap filterMap = objectMapper.readValue(searchParams, HashMap.class);
+        Sort sort;
+        if (orderBy != null && orderDirection != null) {
+            sort = Sort.by(orderDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC, orderBy);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "dateCreated");
+        }
+        return ResponseEntity.ok(userService.getMyFavoriteProductsPageable(filterMap, PageRequest.of(page, size, sort)));
+    }
 }

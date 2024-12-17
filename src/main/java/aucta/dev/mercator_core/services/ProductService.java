@@ -35,6 +35,8 @@ public class ProductService {
 
     @Autowired
     private ImageRepository imageRepository;
+    @Autowired
+    private UserService userService;
 
     @Transactional
     public Page<ProductDTO> getAll(Map<String, String> params, Pageable pageable) throws ParseException {
@@ -78,6 +80,7 @@ public class ProductService {
                 .map(product -> {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
+                    dto.setIsFavorited(product.getUsers().contains(userService.getCurrentUser()));
 
                     dto.setImages(
                             product.getImages().stream()
