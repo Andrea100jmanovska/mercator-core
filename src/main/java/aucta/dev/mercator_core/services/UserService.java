@@ -473,7 +473,7 @@ public class UserService {
                     );
                     return dto;
                 })
-                .sorted(Comparator.comparing(ProductDTO::getDateCreated).reversed())  // Optional: Sort by dateCreated if needed
+                .sorted(Comparator.comparing(ProductDTO::getDateCreated).reversed())
                 .collect(Collectors.toList());
 
         return new PageImpl<>(dtos, pageable, favoriteProducts.size());

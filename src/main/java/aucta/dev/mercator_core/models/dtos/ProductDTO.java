@@ -1,7 +1,6 @@
 package aucta.dev.mercator_core.models.dtos;
 
 import aucta.dev.mercator_core.enums.CategoryType;
-import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +21,8 @@ public class ProductDTO {
     private String description;
 
     private Boolean isFavorited;
+
+    private Boolean inCart;
 
     private Double price;
 

@@ -52,6 +52,14 @@ public class Product extends AbstractEntity implements Serializable {
     )
     List<User> users;
 
+    @ManyToMany(fetch = FetchType.LAZY,  cascade = CascadeType.PERSIST)
+    @JoinTable(
+            name = "CART_PRODUCTS",
+            joinColumns = @JoinColumn(name = "PRODUCT_ID"),
+            inverseJoinColumns = @JoinColumn(name = "CART_ID")
+    )
+    List<Cart> carts;
+
     @ManyToOne
     @JoinColumn(name = "USER_ID")
     private User user;

@@ -64,6 +64,9 @@ public class User extends AbstractEntity implements Serializable {
     )
     private List<Product> favoriteProducts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Cart> carts;
+
     @Transient
     private List<Privilege> privileges = new ArrayList<>();
 
@@ -80,5 +83,6 @@ public class User extends AbstractEntity implements Serializable {
             this.favoriteProducts.add(product);
         }
     }
+
 
 }
