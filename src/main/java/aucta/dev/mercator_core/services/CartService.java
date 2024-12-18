@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +62,28 @@ public class CartService {
 
     }
 
+    @Transactional
+    public ResponseEntity removeFromCart(String productId) throws Exception {
+
+        Optional<User> optionalUser = userRepository.findById(userService.getUser().getId());
+        if (optionalUser.isEmpty()) throw new Error("User not found!");
+        User user = optionalUser.get();
+
+        Product product = productRepository.findById(productId).orElseThrow(() -> new Error("Product not found!"));
+
+        Cart cart = cartRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new Error("Cart not found!"));
+
+        boolean removed = cart.getCartProducts().removeIf(cartProduct -> cartProduct.equals(product));
+
+        if (removed) {
+            cartRepository.save(cart);
+            return ResponseEntity.ok("Product removed from cart!");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found in the cart!");
+        }
+    }
+
 
     @Transactional
     public List<ProductDTO> getCartProducts() throws Exception {
@@ -81,6 +104,7 @@ public class CartService {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
                     dto.setIsFavorited(product.getUsers().contains(userService.getCurrentUser()));
+                    dto.setIsInCart(productsInCart.contains(product));
                     dto.setImages(
                             product.getImages().stream()
                                     .map(image -> {
@@ -126,6 +150,7 @@ public class CartService {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
                     dto.setIsFavorited(product.getUsers().contains(userService.getCurrentUser()));
+                    dto.setIsInCart(productsInCart.contains(product));
                     dto.setImages(
                             product.getImages().stream()
                                     .map(image -> {

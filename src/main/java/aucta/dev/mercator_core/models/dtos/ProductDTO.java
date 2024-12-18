@@ -22,7 +22,7 @@ public class ProductDTO {
 
     private Boolean isFavorited;
 
-    private Boolean inCart;
+    private Boolean isInCart;
 
     private Double price;
 

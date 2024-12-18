@@ -12,6 +12,7 @@ import aucta.dev.mercator_core.models.*;
 import aucta.dev.mercator_core.models.dtos.ImageDTO;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.models.dtos.UserDTO;
+import aucta.dev.mercator_core.repositories.CartRepository;
 import aucta.dev.mercator_core.repositories.MailTemplateRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.repositories.UserRepository;
@@ -69,6 +70,9 @@ public class UserService {
 
     @Autowired
     private MailTemplateRepository mailTemplateRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
 
     @Autowired
     private UserValidator validator;
@@ -415,14 +419,16 @@ public class UserService {
         Optional<User> optionalUser = repo.findById(getUser().getId());
         if (optionalUser.isEmpty()) throw new Error("User not found!");
         User user = optionalUser.get();
-
+        Cart cart = cartRepository.findByUserId(user.getId()).orElse(null);
         List<Product> favoriteProducts = user.getFavoriteProducts();
+        List<Product> productsInCart = cart.getCartProducts();
 
         List<ProductDTO> dtos = favoriteProducts.stream()
                 .map(product -> {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
                     dto.setIsFavorited(product.getUsers().contains(getCurrentUser()));
+                    dto.setIsInCart(productsInCart.contains(product));
                     dto.setImages(
                             product.getImages().stream()
                                     .map(image -> {
@@ -449,7 +455,9 @@ public class UserService {
         if (optionalUser.isEmpty()) throw new Error("User not found!");
         User user = optionalUser.get();
 
+        Cart cart = cartRepository.findByUserId(user.getId()).orElse(null);
         List<Product> favoriteProducts = user.getFavoriteProducts();
+        List<Product> productsInCart = cart.getCartProducts();
 
         int start = (int) pageable.getOffset();
         int end = (start + pageable.getPageSize()) > favoriteProducts.size() ? favoriteProducts.size() : (start + pageable.getPageSize());
@@ -461,6 +469,8 @@ public class UserService {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
                     dto.setIsFavorited(product.getUsers().contains(getCurrentUser()));
+                    dto.setIsInCart(productsInCart.contains(product));
+
                     dto.setImages(
                             product.getImages().stream()
                                     .map(image -> {

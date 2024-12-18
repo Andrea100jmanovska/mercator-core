@@ -47,7 +47,7 @@ public class ProductController {
             @RequestParam(value = "orderBy") String orderBy,
             @RequestParam(value = "orderDirection") String orderDirection,
             @RequestParam(value = "searchParams") String searchParams
-    ) throws IOException, ParseException {
+    ) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         HashMap filterMap = objectMapper.readValue(searchParams, HashMap.class);
         Sort sort;

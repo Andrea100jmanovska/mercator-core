@@ -1,10 +1,12 @@
 package aucta.dev.mercator_core.services;
 
 import aucta.dev.mercator_core.enums.SearchOperation;
+import aucta.dev.mercator_core.models.Cart;
 import aucta.dev.mercator_core.models.Image;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.dtos.ImageDTO;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
+import aucta.dev.mercator_core.repositories.CartRepository;
 import aucta.dev.mercator_core.repositories.ImageRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.repositories.specifications.ProductSpecification;
@@ -38,8 +40,11 @@ public class ProductService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CartRepository cartRepository;
+
     @Transactional
-    public Page<ProductDTO> getAll(Map<String, String> params, Pageable pageable) throws ParseException {
+    public Page<ProductDTO> getAll(Map<String, String> params, Pageable pageable) throws Exception {
         ProductSpecification productSpecification = new ProductSpecification();
         Iterator<Map.Entry<String, String>> iterator = params.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -74,13 +79,16 @@ public class ProductService {
             }
         }
 
+        Cart cart = cartRepository.findByUserId(userService.getUser().getId()).orElse(null);
         Page<Product> productsPage = productRepository.findAll(productSpecification, pageable);
+        List<Product> productsInCart = cart.getCartProducts();
 
         List<ProductDTO> dtos = productsPage.getContent().stream()
                 .map(product -> {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
                     dto.setIsFavorited(product.getUsers().contains(userService.getCurrentUser()));
+                    dto.setIsInCart(productsInCart.contains(product));
 
                     dto.setImages(
                             product.getImages().stream()

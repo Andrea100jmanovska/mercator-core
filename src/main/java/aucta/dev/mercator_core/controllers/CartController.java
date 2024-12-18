@@ -27,6 +27,12 @@ public class CartController {
     }
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_CAPITELIZE_AGENT", "ROLE_CLIENT_ADMIN", "ROLE_CLIENT"})
+    @PutMapping("/removeFromCart")
+    public ResponseEntity removeFromCart(@RequestParam(value = "productId") String productId) throws Exception {
+        return ResponseEntity.ok(cartService.removeFromCart(productId));
+    }
+
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CAPITELIZE_AGENT", "ROLE_CLIENT_ADMIN", "ROLE_CLIENT"})
     @GetMapping("/getCartProducts")
     public ResponseEntity getCartProducts() throws Exception {
         try {
