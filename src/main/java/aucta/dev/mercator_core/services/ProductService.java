@@ -81,7 +81,8 @@ public class ProductService {
 
         Cart cart = cartRepository.findByUserId(userService.getUser().getId()).orElse(null);
         Page<Product> productsPage = productRepository.findAll(productSpecification, pageable);
-        List<Product> productsInCart = cart.getCartProducts();
+
+        List<Product> productsInCart = cart != null ? cart.getCartProducts() : new ArrayList<>();
 
         List<ProductDTO> dtos = productsPage.getContent().stream()
                 .map(product -> {

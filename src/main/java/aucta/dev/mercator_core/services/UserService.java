@@ -421,7 +421,7 @@ public class UserService {
         User user = optionalUser.get();
         Cart cart = cartRepository.findByUserId(user.getId()).orElse(null);
         List<Product> favoriteProducts = user.getFavoriteProducts();
-        List<Product> productsInCart = cart.getCartProducts();
+        List<Product> productsInCart = cart != null ? cart.getCartProducts() : new ArrayList<>();
 
         List<ProductDTO> dtos = favoriteProducts.stream()
                 .map(product -> {
@@ -457,7 +457,8 @@ public class UserService {
 
         Cart cart = cartRepository.findByUserId(user.getId()).orElse(null);
         List<Product> favoriteProducts = user.getFavoriteProducts();
-        List<Product> productsInCart = cart.getCartProducts();
+
+        List<Product> productsInCart = cart != null ? cart.getCartProducts() : new ArrayList<>();
 
         int start = (int) pageable.getOffset();
         int end = (start + pageable.getPageSize()) > favoriteProducts.size() ? favoriteProducts.size() : (start + pageable.getPageSize());
