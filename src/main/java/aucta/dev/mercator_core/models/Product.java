@@ -20,9 +20,6 @@ public class Product extends AbstractEntity implements Serializable {
     @Column(name = "NAME")
     private String name;
 
-    @Column(name = "CATEGORY")
-    private CategoryType category;
-
     @Column(name = "DESCRIPTION")
     private String description;
 
@@ -43,6 +40,10 @@ public class Product extends AbstractEntity implements Serializable {
 
     @OneToMany(mappedBy = "product",cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     private List<Image> images = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "CATEGORY_ID")
+    private Category category;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

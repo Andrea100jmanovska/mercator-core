@@ -40,7 +40,7 @@ public class ProductValidator {
         if (productDTO.getDiscount() == null || productDTO.getDiscount() < 0 || productDTO.getDiscount() > 100)
             throw new BadRequestError("Discount must be between 0-100");
 
-        if (productDTO.getCategory() == null )
+        if (productDTO.getCategory().getCategoryType().name().isEmpty())
             throw new BadRequestError("Category is required field");
 
         if (productDTO.getImages() == null || productDTO.getImages().isEmpty())
@@ -50,7 +50,6 @@ public class ProductValidator {
 
     public void updateProductValidation(ProductDTO productDTO) throws BadRequestError {
 
-        // Validate product fields
         if (productRepository.findById(productDTO.getId()).orElse(null) == null)
             throw new BadRequestError("No such product!");
 
@@ -69,7 +68,7 @@ public class ProductValidator {
         if (productDTO.getDiscount() == null || productDTO.getDiscount() < 0 || productDTO.getDiscount() > 100)
             throw new BadRequestError("Discount must be between 0 and 100");
 
-        if (productDTO.getCategory() == null)
+        if (productDTO.getCategory().getCategoryType().name().isEmpty())
             throw new BadRequestError("Category is a required field");
 
 

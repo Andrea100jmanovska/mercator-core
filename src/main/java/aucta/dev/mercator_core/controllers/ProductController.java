@@ -2,11 +2,12 @@ package aucta.dev.mercator_core.controllers;
 
 import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.exceptions.BadRequestError;
+import aucta.dev.mercator_core.models.Category;
 import aucta.dev.mercator_core.models.Image;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.dtos.ImageDTO;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
-import aucta.dev.mercator_core.repositories.ProductRepository;
+import aucta.dev.mercator_core.repositories.CategoryRepository;
 import aucta.dev.mercator_core.services.ProductService;
 import aucta.dev.mercator_core.services.UserService;
 import aucta.dev.mercator_core.validators.ProductValidator;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +38,9 @@ public class ProductController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
     @RequestMapping(method = RequestMethod.GET)
@@ -79,11 +82,14 @@ public class ProductController {
             @RequestParam("price") Double price,
             @RequestParam("discount") Integer discount,
             @RequestParam("quantity") Integer quantity,
-            @RequestParam("category") CategoryType category,
+            @RequestParam("category") CategoryType categoryType,
             @RequestParam("deliveryPrice") Double deliveryPrice,
             @RequestParam("images") List<MultipartFile> images
     ) throws BadRequestError {
         try {
+            Category category = categoryRepository.findByCategoryType(categoryType)
+                    .orElseThrow(() -> new BadRequestError("Invalid category"));
+
             Product product = new Product();
             product.setName(name);
             product.setDescription(description);
@@ -107,12 +113,15 @@ public class ProductController {
             }
 
             productValidator.createProductValidation(convertToDto(product));
+
             productService.createProduct(product);
 
             return ResponseEntity.ok("Product successfully created with images");
 
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Error processing the images");
+        } catch (BadRequestError e) {
+            return ResponseEntity.status(400).body(e.getMessage());
         }
     }
 
@@ -141,33 +150,41 @@ public class ProductController {
             @RequestParam("price") Double price,
             @RequestParam("discount") Integer discount,
             @RequestParam("quantity") Integer quantity,
-            @RequestParam("category") CategoryType category,
+            @RequestParam("category") CategoryType categoryType,
             @RequestParam("deliveryPrice") Double deliveryPrice,
             @RequestParam("id") String id,
             @RequestParam(value = "images", required = false) List<MultipartFile> images
     ) throws BadRequestError {
         try {
+            // Fetch the Category object based on CategoryType
+            Category category = categoryRepository.findByCategoryType(categoryType)
+                    .orElseThrow(() -> new BadRequestError("Invalid category"));
+
+            // Create a product object with updated details
             Product product = new Product();
-            product.setId(id);
+            product.setId(id);  // Set the product ID for update
             product.setName(name);
             product.setDescription(description);
             product.setPrice(price);
             product.setDiscount(discount);
             product.setQuantity(quantity);
-            product.setCategory(category);
+            product.setCategory(category);  // Set the category object (not just CategoryType)
             product.setDeliveryPrice(deliveryPrice);
 
+            // Validate the product (using the existing validator)
             productValidator.updateProductValidation(convertToDto(product));
 
+            // Update the product through the service layer
             Product updatedProduct = productService.update(product, images);
 
+            // Convert the updated product to DTO
             ProductDTO dto = convertToDto(updatedProduct);
-            return ResponseEntity.ok(dto);
+
+            return ResponseEntity.ok(dto);  // Return the updated product DTO
         } catch (IOException e) {
             throw new BadRequestError("Error processing images");
         }
     }
-
 
 
     @Secured({"ROLE_ADMINISTRATION"})

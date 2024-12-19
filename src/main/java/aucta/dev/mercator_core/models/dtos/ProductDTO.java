@@ -1,6 +1,7 @@
 package aucta.dev.mercator_core.models.dtos;
 
 import aucta.dev.mercator_core.enums.CategoryType;
+import aucta.dev.mercator_core.models.Category;
 import aucta.dev.mercator_core.models.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,7 @@ public class ProductDTO {
 
     private String name;
 
-    private CategoryType category;
+    private Category category;
 
     private String description;
 
