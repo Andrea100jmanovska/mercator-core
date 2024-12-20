@@ -89,7 +89,7 @@ public class ProductController {
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<ProductDTO> getProduct(@PathVariable(value = "id") String id) {
+    public ResponseEntity<ProductDTO> getProduct(@PathVariable(value = "id") String id) throws Exception {
         return ResponseEntity.ok(productService.getById(id));
     }
 

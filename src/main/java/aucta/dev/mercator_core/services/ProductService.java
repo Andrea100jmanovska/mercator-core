@@ -189,13 +189,16 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public ProductDTO getById(String id) {
+    public ProductDTO getById(String id) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+       Cart cart = cartRepository.findByUserId(userService.getUser().getId()).orElse(null);
+        List<Product> productsInCart = cart != null ? cart.getCartProducts() : new ArrayList<>();
 
         ProductDTO dto = new ProductDTO();
         BeanUtils.copyProperties(product, dto);
-
+        dto.setIsFavorited(product.getUsers().contains(userService.getCurrentUser()));
+        dto.setIsInCart(productsInCart.contains(product));
         List<ImageDTO> imageDTOs = product.getImages().stream()
                 .map(image -> {
                     ImageDTO imageDTO = new ImageDTO();
