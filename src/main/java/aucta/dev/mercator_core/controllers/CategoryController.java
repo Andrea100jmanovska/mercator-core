@@ -22,4 +22,9 @@ public class CategoryController {
     public ResponseEntity getAll() throws IOException {
         return ResponseEntity.ok(categoryService.getAll());
     }
+
+    @RequestMapping(path = "/allPublic",method = RequestMethod.GET)
+    public ResponseEntity getAllPublic() throws IOException {
+        return ResponseEntity.ok(categoryService.getAllPublic());
+    }
 }

@@ -62,6 +62,25 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAll(filterMap, PageRequest.of(page, size, sort)));
     }
 
+    @RequestMapping(method = RequestMethod.GET, path = "/mercator")
+    public ResponseEntity getAllPublic(
+            @RequestParam(value = "page") Integer page,
+            @RequestParam(value = "size") Integer size,
+            @RequestParam(value = "orderBy") String orderBy,
+            @RequestParam(value = "orderDirection") String orderDirection,
+            @RequestParam(value = "searchParams") String searchParams
+    ) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        HashMap filterMap = objectMapper.readValue(searchParams, HashMap.class);
+        Sort sort;
+        if (orderBy != null && orderDirection != null) {
+            sort = Sort.by(orderDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC, orderBy);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "dateCreated");
+        }
+        return ResponseEntity.ok(productService.getAllPublic(filterMap, PageRequest.of(page, size, sort)));
+    }
+
     @Secured({"ROLE_ADMINISTRATION", "ROLE_MERCATOR_AGENT", "ROLE_CLIENT"})
     @RequestMapping(path = "/all",method = RequestMethod.GET)
     public ResponseEntity getAllProductsWithoutPaging() throws IOException {
