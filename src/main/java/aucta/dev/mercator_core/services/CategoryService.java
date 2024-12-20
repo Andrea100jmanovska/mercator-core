@@ -21,7 +21,7 @@ public class CategoryService {
             for (CategoryType type : CategoryType.values()) {
                 Category category = new Category();
                 category.setCategoryType(type);
-                category.setName(type.name().replace("_", " ").toLowerCase());
+                category.setName(type.name().replace("_", " "));
                 categoryRepository.save(category);
             }
         }
