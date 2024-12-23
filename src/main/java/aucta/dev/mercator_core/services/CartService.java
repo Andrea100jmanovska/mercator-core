@@ -21,9 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static aucta.dev.mercator_core.auth.AuthUtils.getCurrentUser;
-import static org.springframework.messaging.simp.SimpMessageHeaderAccessor.getUser;
-
 
 @Service
 public class CartService {

@@ -1,6 +1,5 @@
 package aucta.dev.mercator_core.models.dtos;
 
-import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.models.Category;
 import aucta.dev.mercator_core.models.User;
 import lombok.Getter;
@@ -36,6 +35,8 @@ public class ProductDTO {
     private Double deliveryPrice;
 
     private Double totalPrice;
+
+    private List<CommentDTO> comments = new ArrayList<>();
 
     private List<ImageDTO> images = new ArrayList<>();
 

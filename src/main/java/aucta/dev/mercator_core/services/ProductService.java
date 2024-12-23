@@ -24,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -214,30 +213,27 @@ public class ProductService {
     }
     @Transactional
     public Product update(Product product, List<MultipartFile> images) throws IOException {
-        // Retrieve the existing product by ID
+
         Product existingProduct = productRepository.findById(product.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
-        // Update the product properties
         existingProduct.setName(product.getName());
         existingProduct.setDescription(product.getDescription());
         existingProduct.setPrice(product.getPrice());
         existingProduct.setDiscount(product.getDiscount());
         existingProduct.setQuantity(product.getQuantity());
-        existingProduct.setCategory(product.getCategory());  // Set the updated category
+        existingProduct.setCategory(product.getCategory());
         existingProduct.setDeliveryPrice(product.getDeliveryPrice());
 
-        // Recalculate total price based on the updated discount and delivery price
         existingProduct.setTotalPrice(
                 (1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice()
         );
 
-        // If images were provided, handle the image updates
+
         if (images != null && !images.isEmpty()) {
-            // Delete old images
+
             imageRepository.deleteByProduct(existingProduct);
 
-            // Clear existing images list and add the new ones
             existingProduct.getImages().clear();
 
             List<Image> productImages = new ArrayList<>();

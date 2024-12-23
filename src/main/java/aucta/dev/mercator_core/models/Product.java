@@ -1,6 +1,5 @@
 package aucta.dev.mercator_core.models;
 
-import aucta.dev.mercator_core.enums.CategoryType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,6 +39,9 @@ public class Product extends AbstractEntity implements Serializable {
 
     @OneToMany(mappedBy = "product",cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     private List<Image> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Comment> comments = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "CATEGORY_ID")

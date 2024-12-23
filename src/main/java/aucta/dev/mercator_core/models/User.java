@@ -43,6 +43,9 @@ public class User extends AbstractEntity implements Serializable {
     @Column(name = "PHONE_NUMBER")
     private String phoneNumber;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Comment> comments = new ArrayList<>();
+
     @ManyToOne
     @JoinColumn(name = "ORGANIZATION_ID")
     private Organization organization;
