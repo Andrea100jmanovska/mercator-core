@@ -37,6 +37,9 @@ public class Product extends AbstractEntity implements Serializable {
     @Column(name = "TOTAL_PRICE")
     private Double totalPrice;
 
+    @Column(name = "AVERAGE_RATING")
+    private Double averageRating;
+
     @OneToMany(mappedBy = "product",cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     private List<Image> images = new ArrayList<>();
 

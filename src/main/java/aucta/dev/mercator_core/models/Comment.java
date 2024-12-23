@@ -25,6 +25,9 @@ public class Comment {
     @Column(name = "CREATED_AT")
     private LocalDateTime createdAt;
 
+    @Column(name = "RATING")
+    private Double rating;
+
     @ManyToOne
     @JoinColumn(name = "PRODUCT_ID")
     private Product product;

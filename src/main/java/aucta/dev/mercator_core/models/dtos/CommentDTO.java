@@ -17,6 +17,8 @@ public class CommentDTO {
 
     private LocalDateTime createdAt;
 
+    private Double rating;
+
     private String productId;
 
     private String userId;

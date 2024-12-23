@@ -35,6 +35,7 @@ public class CommentService {
             comment.setProduct(product.get());
         }
         comment.setCreatedAt(LocalDateTime.now());
+        comment.setRating(comment.getRating());
         return commentRepository.save(comment);
     }
 
@@ -44,8 +45,16 @@ public class CommentService {
         if (optionalProduct.isEmpty()) {
             throw new Exception("Product not found!");
         }
+        Product product = optionalProduct.get();
 
         List<Comment> comments = commentRepository.findAllByProductIdOrderByCreatedAtDesc(productId);
+        double averageRating = comments.stream()
+                .mapToDouble(Comment::getRating)
+                .average()
+                .orElse(0.0);
+        product.setAverageRating(averageRating);
+        productRepository.save(product);
+
 
         return comments.stream()
                 .map(comment -> {
@@ -54,7 +63,7 @@ public class CommentService {
                     dto.setContent(comment.getContent());
                     dto.setCreatedAt(comment.getCreatedAt());
                     dto.setProductId(comment.getProduct().getId());
-
+                    dto.setRating(comment.getRating());
                     if (comment.getUser() != null) {
                         dto.setUserId(comment.getUser().getId());
                         dto.setUserName(comment.getUser().getDisplayName());

@@ -89,6 +89,7 @@ public class ProductService {
                     BeanUtils.copyProperties(product, dto);
                     dto.setIsFavorited(product.getUsers().contains(userService.getCurrentUser()));
                     dto.setIsInCart(productsInCart.contains(product));
+                    dto.setAverageRating(product.getAverageRating());
 
                     dto.setImages(
                             product.getImages().stream()

@@ -28,6 +28,8 @@ public class ProductDTO {
 
     private Date dateCreated;
 
+    private Double averageRating;
+
     private Integer quantity;
 
     private Integer discount;
