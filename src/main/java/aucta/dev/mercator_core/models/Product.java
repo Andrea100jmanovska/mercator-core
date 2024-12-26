@@ -1,5 +1,6 @@
 package aucta.dev.mercator_core.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,6 +40,10 @@ public class Product extends AbstractEntity implements Serializable {
 
     @Column(name = "AVERAGE_RATING")
     private Double averageRating;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<UserProductHistory> userAccesses = new ArrayList<>();
 
     @OneToMany(mappedBy = "product",cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     private List<Image> images = new ArrayList<>();
