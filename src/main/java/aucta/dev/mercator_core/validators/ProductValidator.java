@@ -2,14 +2,10 @@ package aucta.dev.mercator_core.validators;
 
 import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.Product;
-import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @Component
 public class ProductValidator {
@@ -20,57 +16,60 @@ public class ProductValidator {
     @Autowired
     private ProductRepository productRepository;
 
-    public void createProductValidation(ProductDTO productDTO) throws BadRequestError{
+    public void createProductValidation(Product product) throws BadRequestError{
 
-        if (productDTO == null)
+        if (product == null)
             throw new BadRequestError("Product must not be null");
 
-        if (productDTO.getName() == null || productDTO.getName().trim().isEmpty())
+        if (product.getName() == null || product.getName().trim().isEmpty())
             throw new BadRequestError("Name is required field");
 
-        if (productDTO.getDescription() == null || productDTO.getDescription().trim().isEmpty())
+        if (product.getDescription() == null || product.getDescription().trim().isEmpty())
             throw new BadRequestError("Description is required field");
 
-        if (productDTO.getPrice() == null || productDTO.getPrice().isNaN() || productDTO.getPrice()< 0)
+        if (product.getPrice() == null || product.getPrice().isNaN() || product.getPrice()< 0)
             throw new BadRequestError("Price is required field");
 
-        if (productDTO.getDeliveryPrice() == null || productDTO.getDeliveryPrice().isNaN() || productDTO.getDeliveryPrice()<0)
+        if (product.getDeliveryPrice() == null || product.getDeliveryPrice().isNaN() || product.getDeliveryPrice()<0)
             throw new BadRequestError("Delivery Price is required field");
 
-        if (productDTO.getDiscount() == null || productDTO.getDiscount() < 0 || productDTO.getDiscount() > 100)
+        if (product.getDiscount() == null || product.getDiscount() < 0 || product.getDiscount() > 100)
             throw new BadRequestError("Discount must be between 0-100");
 
-        if (productDTO.getCategory().getCategoryType().name().isEmpty())
+        if (product.getCategory().getCategoryType().name().isEmpty())
             throw new BadRequestError("Category is required field");
 
-        if (productDTO.getImages() == null || productDTO.getImages().isEmpty())
+        if (product.getImages() == null || product.getImages().isEmpty())
             throw new BadRequestError("Image is required field");
 
     }
 
-    public void updateProductValidation(ProductDTO productDTO) throws BadRequestError {
+    public void updateProductValidation(Product product) throws BadRequestError {
 
-        if (productRepository.findById(productDTO.getId()).orElse(null) == null)
+        if (productRepository.findById(product.getId()).orElse(null) == null)
             throw new BadRequestError("No such product!");
 
-        if (productDTO.getName() == null || productDTO.getName().trim().isEmpty())
+        if (product.getName() == null || product.getName().trim().isEmpty())
             throw new BadRequestError("Name is a required field");
 
-        if (productDTO.getDescription() == null || productDTO.getDescription().trim().isEmpty())
+        if (product.getDescription() == null || product.getDescription().trim().isEmpty())
             throw new BadRequestError("Description is a required field");
 
-        if (productDTO.getPrice() == null || productDTO.getPrice().isNaN() || productDTO.getPrice() < 0)
+        if (product.getPrice() == null || product.getPrice().isNaN() || product.getPrice() < 0)
             throw new BadRequestError("Price is a required field");
 
-        if (productDTO.getDeliveryPrice() == null || productDTO.getDeliveryPrice().isNaN() || productDTO.getDeliveryPrice() < 0)
+        if (product.getDeliveryPrice() == null || product.getDeliveryPrice().isNaN() || product.getDeliveryPrice() < 0)
             throw new BadRequestError("Delivery Price is a required field");
 
-        if (productDTO.getDiscount() == null || productDTO.getDiscount() < 0 || productDTO.getDiscount() > 100)
+        if (product.getDiscount() == null || product.getDiscount() < 0 || product.getDiscount() > 100)
             throw new BadRequestError("Discount must be between 0 and 100");
 
-        if (productDTO.getCategory().getCategoryType().name().isEmpty())
+        if (product.getCategory().getCategoryType().name().isEmpty())
             throw new BadRequestError("Category is a required field");
+    }
 
-
+    public void validateProductDelete(String productId) throws BadRequestError {
+        if (productRepository.findById(productId).orElse(null) == null)
+            throw new BadRequestError("No such product!");
     }
 }

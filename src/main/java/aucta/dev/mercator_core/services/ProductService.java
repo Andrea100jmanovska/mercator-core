@@ -1,12 +1,16 @@
 package aucta.dev.mercator_core.services;
 
+import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.enums.SearchOperation;
+import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.Cart;
+import aucta.dev.mercator_core.models.Category;
 import aucta.dev.mercator_core.models.Image;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.dtos.ImageDTO;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.repositories.CartRepository;
+import aucta.dev.mercator_core.repositories.CategoryRepository;
 import aucta.dev.mercator_core.repositories.ImageRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
 import aucta.dev.mercator_core.repositories.specifications.ProductSpecification;
@@ -20,6 +24,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -36,6 +41,10 @@ public class ProductService {
 
     @Autowired
     private ImageRepository imageRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
     @Autowired
     private UserService userService;
 
@@ -146,17 +155,12 @@ public class ProductService {
             }
         }
 
-       // Cart cart = cartRepository.findByUserId(userService.getUser().getId()).orElse(null);
         Page<Product> productsPage = productRepository.findAll(productSpecification, pageable);
-
-        //List<Product> productsInCart = cart != null ? cart.getCartProducts() : new ArrayList<>();
 
         List<ProductDTO> dtos = productsPage.getContent().stream()
                 .map(product -> {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
-                    //dto.setIsFavorited(product.getUsers().contains(userService.getCurrentUser()));
-                   // dto.setIsInCart(productsInCart.contains(product));
 
                     dto.setImages(
                             product.getImages().stream()
@@ -183,13 +187,51 @@ public class ProductService {
     }
 
     @Transactional
-    public Product createProduct(Product product){
+    public Product createProduct( String name,
+                                 String description,
+                                 Double price,
+                                 Integer discount,
+                                 Integer quantity,
+                                 CategoryType categoryType,
+                                 Double deliveryPrice,
+                                 List<MultipartFile> images) throws BadRequestError, IOException {
+        Category category = categoryRepository.findByCategoryType(categoryType)
+                .orElseThrow(() -> new BadRequestError("Invalid category"));
 
-        return productRepository.save(product);
+        Product product = new Product();
+        product.setName(name);
+        product.setDescription(description);
+        product.setPrice(price);
+        product.setDiscount(discount);
+        product.setQuantity(quantity);
+        product.setCategory(category);
+        product.setDeliveryPrice(deliveryPrice);
+        product.setTotalPrice((1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice());
+        product.setUser(userService.getCurrentUser());
+
+        if (images != null && !images.isEmpty()) {
+            for (MultipartFile image : images) {
+                byte[] imageBytes = image.getBytes();
+                Image productImage = new Image();
+                productImage.setImageData(imageBytes);
+                productImage.setProduct(product);
+
+                product.getImages().add(productImage);
+            }
+        }
+        return product;
+    }
+
+    public Product getById(String id) throws BadRequestError {
+        Product product = productRepository.findById(id).orElse(null);
+        if(product == null){
+            throw new BadRequestError("Newsletter Post not found!");
+        }
+        return product;
     }
 
     @Transactional(readOnly = true)
-    public ProductDTO getById(String id) throws Exception {
+    public ProductDTO getByDTOId(String id) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
        Cart cart = cartRepository.findByUserId(userService.getUser().getId()).orElse(null);
@@ -212,19 +254,48 @@ public class ProductService {
         dto.setImages(imageDTOs);
         return dto;
     }
+
+    public ProductDTO convertToDto(Product product) {
+        ProductDTO dto = new ProductDTO();
+        BeanUtils.copyProperties(product, dto);
+
+        List<ImageDTO> imageDTOs = product.getImages().stream()
+                .map(image -> {
+                    ImageDTO imageDTO = new ImageDTO();
+                    imageDTO.setId(image.getId());
+                    imageDTO.setImageData(image.getImageData());
+                    return imageDTO;
+                })
+                .collect(Collectors.toList());
+
+        dto.setImages(imageDTOs);
+        return dto;
+    }
+
+
     @Transactional
-    public Product update(Product product, List<MultipartFile> images) throws IOException {
+    public Product update(Product product,
+                          String name,
+                          String description,
+                          Double price,
+                          Integer discount,
+                          Integer quantity,
+                          CategoryType categoryType,
+                          Double deliveryPrice,
+                          List<MultipartFile> images) throws IOException, BadRequestError {
 
         Product existingProduct = productRepository.findById(product.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+        Category category = categoryRepository.findByCategoryType(categoryType)
+                .orElseThrow(() -> new BadRequestError("Invalid category"));
 
-        existingProduct.setName(product.getName());
-        existingProduct.setDescription(product.getDescription());
-        existingProduct.setPrice(product.getPrice());
-        existingProduct.setDiscount(product.getDiscount());
-        existingProduct.setQuantity(product.getQuantity());
-        existingProduct.setCategory(product.getCategory());
-        existingProduct.setDeliveryPrice(product.getDeliveryPrice());
+        existingProduct.setName(name);
+        existingProduct.setDescription(description);
+        existingProduct.setPrice(price);
+        existingProduct.setDiscount(discount);
+        existingProduct.setQuantity(quantity);
+        existingProduct.setCategory(category);
+        existingProduct.setDeliveryPrice(deliveryPrice);
 
         existingProduct.setTotalPrice(
                 (1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice()
@@ -236,7 +307,12 @@ public class ProductService {
             imageRepository.deleteByProduct(existingProduct);
 
             existingProduct.getImages().clear();
+            existingProduct.setImages(new ArrayList<>());
+        }
 
+        if(images != null && !images.isEmpty()) {
+            imageRepository.deleteByProduct(existingProduct);
+            existingProduct.getImages().clear();
             List<Image> productImages = new ArrayList<>();
             for (MultipartFile imageFile : images) {
                 Image image = new Image();
