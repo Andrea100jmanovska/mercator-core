@@ -51,6 +51,9 @@ public class ProductService {
     @Autowired
     private CartRepository cartRepository;
 
+    @Autowired
+    private UserProductHistoryService userProductHistoryService;
+
     @Transactional
     public Page<ProductDTO> getAll(Map<String, String> params, Pageable pageable) throws Exception {
         ProductSpecification productSpecification = new ProductSpecification();
@@ -230,7 +233,7 @@ public class ProductService {
         return product;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ProductDTO getByDTOId(String id) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
@@ -252,6 +255,7 @@ public class ProductService {
                 .collect(Collectors.toList());
 
         dto.setImages(imageDTOs);
+        userProductHistoryService.logProductHistory(product);
         return dto;
     }
 

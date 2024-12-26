@@ -12,5 +12,4 @@ import org.springframework.stereotype.Repository;
 public interface UserProductHistoryRepository extends JpaRepository<UserProductHistory, String>, JpaSpecificationExecutor<UserProductHistory> {
 
     boolean existsByUserAndProduct(User user, Product product);
-
 }

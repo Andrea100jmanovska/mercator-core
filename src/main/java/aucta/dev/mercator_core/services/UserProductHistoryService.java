@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.text.DateFormat;
@@ -44,10 +45,12 @@ public class UserProductHistoryService {
         }
     }
 
+    @Transactional
     public List<UserProductHistoryDTO> getUserHistoryProductsAccessWithoutPaging(Map<String, String> params, Boolean topValuesOnly) throws ParseException {
         UserProductHistorySpecification userProductHistorySpecification = new UserProductHistorySpecification();
         userProductHistorySpecification.add(new SearchCriteria("user.id", getCurrentUser().getId(), SearchOperation.MATCH));
         Boolean isFavorited = null;
+
         for (Map.Entry<String, String> entry : params.entrySet()) {
             if (!StringUtils.isEmpty(entry.getKey()) && !StringUtils.isEmpty(entry.getValue())) {
                 if (entry.getKey().equals("dateAccessed")) {
@@ -73,7 +76,8 @@ public class UserProductHistoryService {
 
                     userProductHistorySpecification.add(new SearchCriteria(entry.getKey(), from.getTime(), SearchOperation.JAVA_UTIL_DATE_GREATER_THAN_EQUAL));
                     userProductHistorySpecification.add(new SearchCriteria(entry.getKey(), to.getTime(), SearchOperation.JAVA_UTIL_DATE_LESS_THAN_EQUAL));
-                } if (entry.getKey().equals("isFavorited")) {
+                }
+                if (entry.getKey().equals("isFavorited")) {
                     if (entry.getValue().equals("true"))
                         isFavorited = Boolean.TRUE;
                     else if (entry.getValue().equals("false"))
@@ -81,13 +85,13 @@ public class UserProductHistoryService {
                 } else {
                     userProductHistorySpecification.add(new SearchCriteria(entry.getKey(), entry.getValue(), SearchOperation.MATCH));
                 }
-
             }
         }
+
         List<UserProductHistory> userProductHistories = userProductHistoryRepository.findAll(userProductHistorySpecification);
 
         if (isFavorited != null) {
-            if(isFavorited){
+            if(isFavorited) {
                 userProductHistories = userProductHistories.stream()
                         .filter(product -> product.getProduct().getUsers().contains(getCurrentUser()))
                         .collect(Collectors.toList());
@@ -96,7 +100,6 @@ public class UserProductHistoryService {
                         .filter(product -> !product.getProduct().getUsers().contains(getCurrentUser()))
                         .collect(Collectors.toList());
             }
-
         }
 
         List<UserProductHistoryDTO> userProductHistoryDTOS = userProductHistories.stream()
@@ -115,25 +118,20 @@ public class UserProductHistoryService {
         } else {
             return userProductHistoryDTOS;
         }
-
     }
 
+    @Transactional
     public Page<UserProductHistoryDTO> getUserHistoryProducts(Pageable pageable) {
         UserProductHistorySpecification userProductHistorySpecification = new UserProductHistorySpecification();
         userProductHistorySpecification.add(new SearchCriteria("user.id", getCurrentUser().getId(), SearchOperation.MATCH));
-        List<UserProductHistory> userProductHistories = userProductHistoryRepository.findAll(userProductHistorySpecification);
 
-        List<UserProductHistoryDTO> userProductHistoryDTOS = userProductHistories.stream()
+        Page<UserProductHistory> userProductHistoriesPage = userProductHistoryRepository.findAll(userProductHistorySpecification, pageable);
+
+        List<UserProductHistoryDTO> userProductHistoryDTOS = userProductHistoriesPage.getContent().stream()
                 .map(access -> new UserProductHistoryDTO(access, getCurrentUser()))
                 .collect(Collectors.toList());
 
-        userProductHistoryDTOS.sort(Comparator.comparing(UserProductHistoryDTO::getDateAccessed).reversed());
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), userProductHistoryDTOS.size());
-
-        List<UserProductHistoryDTO> paginatedList = userProductHistoryDTOS.subList(start, end);
-        return new PageImpl<>(paginatedList, pageable, userProductHistoryDTOS.size());
+        return new PageImpl<>(userProductHistoryDTOS, pageable, userProductHistoriesPage.getTotalElements());
     }
 }
 
