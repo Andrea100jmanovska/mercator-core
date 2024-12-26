@@ -24,6 +24,9 @@ public class UserProductHistoryDTO {
 
     private ProductDTO product;
 
+    public UserProductHistoryDTO() {
+    }
+
     public UserProductHistoryDTO(UserProductHistory userProductHistory, User currentUser) {
         this.id = userProductHistory.getId();
         this.userId = userProductHistory.getUser().getId();
@@ -36,7 +39,6 @@ public class UserProductHistoryDTO {
     private ProductDTO mapProductToProductDTO(Product product, User currentUser) {
         ProductDTO productDTO = new ProductDTO();
         BeanUtils.copyProperties(product, productDTO);
-        productDTO.setIsFavorited(product.getUsers().contains(currentUser));
 
         productDTO.setImages(
                 product.getImages().stream()

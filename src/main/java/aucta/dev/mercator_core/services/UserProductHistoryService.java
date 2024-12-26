@@ -1,13 +1,18 @@
 package aucta.dev.mercator_core.services;
 
 import aucta.dev.mercator_core.enums.SearchOperation;
+import aucta.dev.mercator_core.models.Cart;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.User;
 import aucta.dev.mercator_core.models.UserProductHistory;
+import aucta.dev.mercator_core.models.dtos.ImageDTO;
+import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.models.dtos.UserProductHistoryDTO;
+import aucta.dev.mercator_core.repositories.CartRepository;
 import aucta.dev.mercator_core.repositories.UserProductHistoryRepository;
 import aucta.dev.mercator_core.repositories.specifications.SearchCriteria;
 import aucta.dev.mercator_core.repositories.specifications.UserProductHistorySpecification;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -29,6 +34,9 @@ public class UserProductHistoryService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CartRepository cartRepository;
 
     @Autowired
     private UserProductHistoryRepository userProductHistoryRepository;
@@ -126,9 +134,37 @@ public class UserProductHistoryService {
         userProductHistorySpecification.add(new SearchCriteria("user.id", getCurrentUser().getId(), SearchOperation.MATCH));
 
         Page<UserProductHistory> userProductHistoriesPage = userProductHistoryRepository.findAll(userProductHistorySpecification, pageable);
+        User currentUser = userService.getCurrentUser();
+        Cart cart = cartRepository.findByUserId(currentUser.getId()).orElse(null);
+        List<Product> productsInCart = cart != null ? cart.getCartProducts() : new ArrayList<>();
 
         List<UserProductHistoryDTO> userProductHistoryDTOS = userProductHistoriesPage.getContent().stream()
-                .map(access -> new UserProductHistoryDTO(access, getCurrentUser()))
+                .map(history -> {
+                    UserProductHistoryDTO dto = new UserProductHistoryDTO();
+                    dto.setId(history.getId());
+                    dto.setUserId(history.getUser().getId());
+                    dto.setProductId(history.getProduct().getId());
+
+                    dto.setDateAccessed(history.getDateAccessed());
+
+                    Product product = history.getProduct();
+                    ProductDTO productDTO = new ProductDTO();
+                    BeanUtils.copyProperties(product, productDTO);
+                    productDTO.setIsFavorited(product.getUsers().contains(currentUser));
+                    productDTO.setIsInCart(productsInCart.contains(product));
+
+                    productDTO.setImages(product.getImages().stream()
+                            .map(image -> {
+                                ImageDTO imageDTO = new ImageDTO();
+                                imageDTO.setId(image.getId());
+                                imageDTO.setImageData(image.getImageData());
+                                return imageDTO;
+                            })
+                            .collect(Collectors.toList()));
+
+                    dto.setProduct(productDTO);
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         return new PageImpl<>(userProductHistoryDTOS, pageable, userProductHistoriesPage.getTotalElements());
