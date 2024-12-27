@@ -136,6 +136,7 @@ public class OrderedProductService {
                 ProductDTO dto = new ProductDTO();
                 BeanUtils.copyProperties(product, dto);
                 dto.setOrderId(order.getId());
+                dto.setOrderDate(order.getOrderDate());
                 dto.setImages(
                         product.getImages().stream()
                                 .map(image -> {
@@ -144,13 +145,15 @@ public class OrderedProductService {
                                     imageDTO.setImageData(image.getImageData());
                                     return imageDTO;
                                 })
-
                                 .collect(Collectors.toList())
                 );
 
                 dtos.add(dto);
             }
         }
+        dtos.sort(Comparator.comparing(ProductDTO::getOrderDate).reversed());
+
+        Collections.reverse(dtos);
 
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), dtos.size());
