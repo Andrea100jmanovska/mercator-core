@@ -36,6 +36,8 @@ public class ProductDTO {
 
     private Double deliveryPrice;
 
+    private Long orderId;
+
     private Double totalPrice;
 
     private List<CommentDTO> comments = new ArrayList<>();

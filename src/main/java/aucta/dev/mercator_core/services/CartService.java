@@ -81,6 +81,21 @@ public class CartService {
         }
     }
 
+    @Transactional
+    public ResponseEntity emptyCart() throws Exception {
+        Optional<User> optionalUser = userRepository.findById(userService.getUser().getId());
+        if (optionalUser.isEmpty()) throw new Error("User not found!");
+        User user = optionalUser.get();
+        Cart cart = cartRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new Error("Cart not found!"));
+
+        cart.getCartProducts().clear();
+
+        cartRepository.save(cart);
+
+        return ResponseEntity.ok("Cart is empty!");
+    }
+
 
     @Transactional
     public List<ProductDTO> getCartProducts() throws Exception {

@@ -26,6 +26,7 @@ public class OrderedProduct {
     private LocalDateTime orderDate;
 
     @Column(name = "STATUS")
+    @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
     @Column(name = "TOTAL_AMOUNT")

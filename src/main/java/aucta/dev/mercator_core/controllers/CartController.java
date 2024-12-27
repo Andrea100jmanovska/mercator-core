@@ -33,6 +33,12 @@ public class CartController {
     }
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_CAPITELIZE_AGENT", "ROLE_CLIENT_ADMIN", "ROLE_CLIENT"})
+    @PutMapping("/emptyCart")
+    public ResponseEntity emptyCart() throws Exception {
+        return ResponseEntity.ok(cartService.emptyCart());
+    }
+
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CAPITELIZE_AGENT", "ROLE_CLIENT_ADMIN", "ROLE_CLIENT"})
     @GetMapping("/getCartProducts")
     public ResponseEntity getCartProducts() throws Exception {
         try {

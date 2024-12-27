@@ -96,37 +96,34 @@ public class OrderedProductService {
 
         List<OrderedProduct> orderedProducts = orderedProductRepository.findByUser(userService.getCurrentUser());
 
-        List<Product> orderedItems = new ArrayList<>();
+        List<ProductDTO> dtos = new ArrayList<>();
 
         for (OrderedProduct order : orderedProducts) {
-            orderedItems.addAll(order.getProducts());
+            for (Product product : order.getProducts()) {
+                ProductDTO dto = new ProductDTO();
+                BeanUtils.copyProperties(product, dto);
+                dto.setOrderId(order.getId());
+                dto.setImages(
+                        product.getImages().stream()
+                                .map(image -> {
+                                    ImageDTO imageDTO = new ImageDTO();
+                                    imageDTO.setId(image.getId());
+                                    imageDTO.setImageData(image.getImageData());
+                                    return imageDTO;
+                                })
+                                .collect(Collectors.toList())
+                );
+
+                dtos.add(dto);
+            }
         }
 
         int start = (int) pageable.getOffset();
-        int end = (start + pageable.getPageSize()) > orderedItems.size() ? orderedItems.size() : (start + pageable.getPageSize());
+        int end = Math.min(start + pageable.getPageSize(), dtos.size());
 
-        List<Product> pagedFavoriteProducts = orderedItems.subList(start, end);
+        List<ProductDTO> pagedDtos = dtos.subList(start, end);
 
-        List<ProductDTO> dtos = pagedFavoriteProducts.stream()
-                .map(product -> {
-                    ProductDTO dto = new ProductDTO();
-                    BeanUtils.copyProperties(product, dto);
-
-                    dto.setImages(
-                            product.getImages().stream()
-                                    .map(image -> {
-                                        ImageDTO imageDTO = new ImageDTO();
-                                        imageDTO.setId(image.getId());
-                                        imageDTO.setImageData(image.getImageData());
-                                        return imageDTO;
-                                    })
-                                    .collect(Collectors.toList())
-                    );
-                    return dto;
-                })
-                .sorted(Comparator.comparing(ProductDTO::getDateCreated).reversed())
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(dtos, pageable, orderedItems.size());
+        return new PageImpl<>(pagedDtos, pageable, dtos.size());
     }
+
 }
