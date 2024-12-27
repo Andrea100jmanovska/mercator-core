@@ -52,6 +52,9 @@ public class User extends AbstractEntity implements Serializable {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Comment> comments = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderedProduct> orderedProducts = new ArrayList<>();
+
     @ManyToOne
     @JoinColumn(name = "ORGANIZATION_ID")
     private Organization organization;

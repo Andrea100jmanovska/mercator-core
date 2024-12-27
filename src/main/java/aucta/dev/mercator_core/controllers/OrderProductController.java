@@ -1,0 +1,66 @@
+package aucta.dev.mercator_core.controllers;
+
+import aucta.dev.mercator_core.models.Product;
+import aucta.dev.mercator_core.models.User;
+import aucta.dev.mercator_core.models.dtos.OrderProductDTO;
+import aucta.dev.mercator_core.repositories.OrderedProductRepository;
+import aucta.dev.mercator_core.services.OrderedProductService;
+import aucta.dev.mercator_core.services.ProductService;
+import aucta.dev.mercator_core.services.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+
+@RestController
+@RequestMapping("/orders")
+public class OrderProductController {
+
+    @Autowired
+    private OrderedProductService orderedProductService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private OrderedProductRepository orderedProductRepository;
+
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
+    @RequestMapping(method = RequestMethod.POST)
+    public ResponseEntity placeOrder(@RequestBody List<OrderProductDTO> products, @RequestParam Double totalAmount) {
+
+        return ResponseEntity.ok(orderedProductService.placeOrder(products, totalAmount));
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity getUserOrderedProducts() {
+        User currentUser = userService.getCurrentUser();
+        return ResponseEntity.ok(orderedProductService.getOrderedProductsByUser(currentUser));
+    }
+
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
+    @RequestMapping(path = "/productsPageable",method = RequestMethod.GET)
+    public ResponseEntity getUserOrderedProductsPageable(
+            @RequestParam(value = "page") Integer page,
+            @RequestParam(value = "size") Integer size,
+            @RequestParam(value = "orderBy") String orderBy,
+            @RequestParam(value = "orderDirection") String orderDirection,
+            @RequestParam(value = "searchParams") String searchParams
+    ) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        HashMap filterMap = objectMapper.readValue(searchParams, HashMap.class);
+        Sort sort;
+        if (orderBy != null && orderDirection != null) {
+            sort = Sort.by(orderDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC, orderBy);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "dateCreated");
+        }
+        return ResponseEntity.ok(orderedProductService.getOrderedProductsByUserPageable(filterMap, PageRequest.of(page, size, sort)));
+    }
+}
