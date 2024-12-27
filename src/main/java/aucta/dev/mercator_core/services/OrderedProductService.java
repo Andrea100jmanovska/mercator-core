@@ -5,11 +5,10 @@ import aucta.dev.mercator_core.models.Cart;
 import aucta.dev.mercator_core.models.OrderedProduct;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.User;
-import aucta.dev.mercator_core.models.dtos.ImageDTO;
-import aucta.dev.mercator_core.models.dtos.OrderProductDTO;
-import aucta.dev.mercator_core.models.dtos.ProductDTO;
+import aucta.dev.mercator_core.models.dtos.*;
 import aucta.dev.mercator_core.repositories.OrderedProductRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,7 +21,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static aucta.dev.mercator_core.auth.AuthUtils.getCurrentUser;
 
 @Service
 public class OrderedProductService {
@@ -36,12 +34,14 @@ public class OrderedProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    public OrderedProduct placeOrder(List<OrderProductDTO> orderProductDTOs, Double totalAmount) {
+    @Transactional
+    public OrderedProductResponseDTO placeOrder(List<OrderProductDTO> orderProductDTOs, Double totalAmount) {
         User user = userService.getCurrentUser();
         List<Product> products = new ArrayList<>();
 
         for (OrderProductDTO dto : orderProductDTOs) {
-            Product product = productRepository.findById(dto.getProductId()).orElse(null);
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found"));
             product.setQuantity(dto.getQuantity());
             product.setPrice(dto.getPrice());
             product.setDeliveryPrice(dto.getDeliveryPrice());
@@ -55,7 +55,40 @@ public class OrderedProductService {
         orderedProduct.setTotalAmount(totalAmount);
         orderedProduct.setProducts(products);
 
-        return orderedProductRepository.save(orderedProduct);
+        OrderedProduct savedOrder = orderedProductRepository.save(orderedProduct);
+        return convertToDTO(savedOrder);
+    }
+
+    private OrderedProductResponseDTO convertToDTO(OrderedProduct order) {
+        OrderedProductResponseDTO dto = new OrderedProductResponseDTO();
+        dto.setId(order.getId());
+        dto.setOrderDate(order.getOrderDate());
+        dto.setStatus(order.getStatus());
+        dto.setTotalAmount(order.getTotalAmount());
+
+        List<ProductResponseDTO> productDTOs = order.getProducts().stream()
+                .map(this::convertProductToDTO)
+                .collect(Collectors.toList());
+
+        dto.setProducts(productDTOs);
+        return dto;
+    }
+
+    private ProductResponseDTO convertProductToDTO(Product product) {
+        ProductResponseDTO dto = new ProductResponseDTO();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setQuantity(product.getQuantity());
+        dto.setDiscount(product.getDiscount());
+        dto.setDeliveryPrice(product.getDeliveryPrice());
+        dto.setTotalPrice(product.getTotalPrice());
+        dto.setAverageRating(product.getAverageRating());
+        if (product.getCategory() != null) {
+            dto.setCategoryName(product.getCategory().getName());
+        }
+        return dto;
     }
 
     @Transactional
@@ -111,6 +144,7 @@ public class OrderedProductService {
                                     imageDTO.setImageData(image.getImageData());
                                     return imageDTO;
                                 })
+
                                 .collect(Collectors.toList())
                 );
 

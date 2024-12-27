@@ -1,11 +1,10 @@
 package aucta.dev.mercator_core.controllers;
 
-import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.User;
 import aucta.dev.mercator_core.models.dtos.OrderProductDTO;
+import aucta.dev.mercator_core.models.dtos.OrderedProductResponseDTO;
 import aucta.dev.mercator_core.repositories.OrderedProductRepository;
 import aucta.dev.mercator_core.services.OrderedProductService;
-import aucta.dev.mercator_core.services.ProductService;
 import aucta.dev.mercator_core.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +32,9 @@ public class OrderProductController {
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity placeOrder(@RequestBody List<OrderProductDTO> products, @RequestParam Double totalAmount) {
-
+    public ResponseEntity<OrderedProductResponseDTO> placeOrder(
+            @RequestBody List<OrderProductDTO> products,
+            @RequestParam Double totalAmount) {
         return ResponseEntity.ok(orderedProductService.placeOrder(products, totalAmount));
     }
 
