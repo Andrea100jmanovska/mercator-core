@@ -2,11 +2,16 @@ package aucta.dev.mercator_core.services;
 
 import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.enums.OrderStatus;
+import aucta.dev.mercator_core.enums.SearchOperation;
 import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.*;
 import aucta.dev.mercator_core.models.dtos.*;
 import aucta.dev.mercator_core.repositories.OrderedProductRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
+import aucta.dev.mercator_core.repositories.specifications.OrderedProductSpecification;
+import aucta.dev.mercator_core.repositories.specifications.ProductSpecification;
+import aucta.dev.mercator_core.repositories.specifications.SearchCriteria;
+import io.micrometer.common.util.StringUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -166,8 +173,42 @@ public class OrderedProductService {
 
     @Transactional
     public Page<ProductDTO> getAllOrdersPageable(Map<String, String> params, Pageable pageable) throws Exception {
+        OrderedProductSpecification orderedProductSpecification = new OrderedProductSpecification();
+        Iterator<Map.Entry<String, String>> iterator = params.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
+            if (!org.springframework.util.StringUtils.isEmpty(entry.getKey()) && !StringUtils.isEmpty(entry.getValue())) {
+                if (entry.getKey().equals("dateCreated")) {
+                    Calendar from = Calendar.getInstance();
+                    from.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
+                    DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH);
+                    from.setTime(formatter.parse(String.valueOf(entry.getValue())));
+                    from.set(Calendar.HOUR_OF_DAY, 0);
+                    from.set(Calendar.MINUTE, 0);
+                    from.set(Calendar.SECOND, 0);
+                    from.set(Calendar.MILLISECOND, 0);
 
-        List<OrderedProduct> orderedProducts = orderedProductRepository.findAll();
+                    Calendar to = Calendar.getInstance();
+                    to.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
+                    to.setTime(formatter.parse(String.valueOf(entry.getValue())));
+                    to.set(Calendar.HOUR_OF_DAY, 0);
+                    to.set(Calendar.MINUTE, 0);
+                    to.set(Calendar.SECOND, 0);
+                    to.set(Calendar.MILLISECOND, 0);
+                    to.add(Calendar.HOUR, 23);
+                    to.add(Calendar.MINUTE, 59);
+                    to.add(Calendar.SECOND, 59);
+
+                    orderedProductSpecification.add(new SearchCriteria(entry.getKey(), from.getTime(), SearchOperation.JAVA_UTIL_DATE_GREATER_THAN_EQUAL));
+                    orderedProductSpecification.add(new SearchCriteria(entry.getKey(), to.getTime(), SearchOperation.JAVA_UTIL_DATE_LESS_THAN_EQUAL));
+                } else {
+                    orderedProductSpecification.add(new SearchCriteria(entry.getKey(), entry.getValue(), SearchOperation.MATCH));
+                }
+            }
+        }
+
+        //Page<Product> productsPage = productRepository.findAll(productSpecification, pageable);
+        List<OrderedProduct> orderedProducts = orderedProductRepository.findAll(orderedProductSpecification);
 
         List<ProductDTO> dtos = new ArrayList<>();
 
