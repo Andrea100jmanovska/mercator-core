@@ -44,6 +44,12 @@ public class ProductDTO {
 
     private OrderStatus orderStatus;
 
+    private String orderFirstName;
+
+    private String orderLastName;
+
+    private String orderEmail;
+
     private Double totalPrice;
 
     private List<CommentDTO> comments = new ArrayList<>();

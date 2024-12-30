@@ -1,6 +1,7 @@
 package aucta.dev.mercator_core.models.dtos;
 
 import aucta.dev.mercator_core.enums.OrderStatus;
+import aucta.dev.mercator_core.models.User;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,4 +17,5 @@ public class OrderedProductResponseDTO {
     private OrderStatus status;
     private Double totalAmount;
     private List<ProductResponseDTO> products = new ArrayList<>();
+    private User user;
 }

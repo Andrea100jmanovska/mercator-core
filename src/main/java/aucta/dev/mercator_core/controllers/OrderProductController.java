@@ -98,5 +98,9 @@ public class OrderProductController {
     }
 
 
-
+    @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
+    @RequestMapping(method = RequestMethod.PUT)
+    public ResponseEntity<OrderedProductResponseDTO> updateOrder(@RequestBody OrderedProduct orderedProduct) throws Exception {
+        return ResponseEntity.ok(orderedProductService.update(orderedProduct));
+    }
 }

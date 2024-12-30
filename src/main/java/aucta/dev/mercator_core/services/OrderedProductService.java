@@ -178,6 +178,9 @@ public class OrderedProductService {
                 dto.setOrderId(order.getId());
                 dto.setOrderStatus(order.getStatus());
                 dto.setOrderDate(order.getOrderDate());
+                dto.setOrderEmail(order.getUser().getEmail());
+                dto.setOrderFirstName(order.getUser().getFirstName());
+                dto.setOrderLastName(order.getUser().getLastName());
                 dto.setImages(
                         product.getImages().stream()
                                 .map(image -> {
@@ -212,6 +215,19 @@ public class OrderedProductService {
         OrderedProductResponseDTO dto = new OrderedProductResponseDTO();
         BeanUtils.copyProperties(orderedProduct, dto);
 
+        return dto;
+    }
+
+    public OrderedProductResponseDTO update(OrderedProduct orderedProduct) {
+
+        OrderedProduct existingOrder = orderedProductRepository.findById(orderedProduct.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        existingOrder.setStatus(orderedProduct.getStatus());
+        orderedProductRepository.save(existingOrder);
+
+        OrderedProductResponseDTO dto = new OrderedProductResponseDTO();
+        BeanUtils.copyProperties(existingOrder, dto);
         return dto;
     }
 
