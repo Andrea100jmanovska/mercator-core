@@ -256,6 +256,10 @@ public class OrderedProductService {
         OrderedProductResponseDTO dto = new OrderedProductResponseDTO();
         BeanUtils.copyProperties(orderedProduct, dto);
 
+        UserDTO userDto = new UserDTO();
+        BeanUtils.copyProperties(orderedProduct.getUser(), userDto);
+        dto.setUserDTO(userDto);
+
         return dto;
     }
 

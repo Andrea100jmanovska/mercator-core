@@ -17,5 +17,5 @@ public class OrderedProductResponseDTO {
     private OrderStatus status;
     private Double totalAmount;
     private List<ProductResponseDTO> products = new ArrayList<>();
-    private User user;
+    private UserDTO userDTO;
 }
