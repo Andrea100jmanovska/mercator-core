@@ -1,10 +1,9 @@
 package aucta.dev.mercator_core.services;
 
+import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.enums.OrderStatus;
-import aucta.dev.mercator_core.models.Cart;
-import aucta.dev.mercator_core.models.OrderedProduct;
-import aucta.dev.mercator_core.models.Product;
-import aucta.dev.mercator_core.models.User;
+import aucta.dev.mercator_core.exceptions.BadRequestError;
+import aucta.dev.mercator_core.models.*;
 import aucta.dev.mercator_core.models.dtos.*;
 import aucta.dev.mercator_core.repositories.OrderedProductRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
@@ -16,7 +15,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -161,6 +162,57 @@ public class OrderedProductService {
         List<ProductDTO> pagedDtos = dtos.subList(start, end);
 
         return new PageImpl<>(pagedDtos, pageable, dtos.size());
+    }
+
+    @Transactional
+    public Page<ProductDTO> getAllOrdersPageable(Map<String, String> params, Pageable pageable) throws Exception {
+
+        List<OrderedProduct> orderedProducts = orderedProductRepository.findAll();
+
+        List<ProductDTO> dtos = new ArrayList<>();
+
+        for (OrderedProduct order : orderedProducts) {
+            for (Product product : order.getProducts()) {
+                ProductDTO dto = new ProductDTO();
+                BeanUtils.copyProperties(product, dto);
+                dto.setOrderId(order.getId());
+                dto.setOrderStatus(order.getStatus());
+                dto.setOrderDate(order.getOrderDate());
+                dto.setImages(
+                        product.getImages().stream()
+                                .map(image -> {
+                                    ImageDTO imageDTO = new ImageDTO();
+                                    imageDTO.setId(image.getId());
+                                    imageDTO.setImageData(image.getImageData());
+                                    return imageDTO;
+                                })
+                                .collect(Collectors.toList())
+                );
+
+                dtos.add(dto);
+            }
+        }
+        dtos.sort(Comparator.comparing(ProductDTO::getOrderDate).reversed());
+
+        Collections.reverse(dtos);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), dtos.size());
+
+        List<ProductDTO> pagedDtos = dtos.subList(start, end);
+
+        return new PageImpl<>(pagedDtos, pageable, dtos.size());
+    }
+
+    @Transactional
+    public OrderedProductResponseDTO getByDTOId(Long id) throws Exception {
+        OrderedProduct orderedProduct = orderedProductRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        OrderedProductResponseDTO dto = new OrderedProductResponseDTO();
+        BeanUtils.copyProperties(orderedProduct, dto);
+
+        return dto;
     }
 
 }

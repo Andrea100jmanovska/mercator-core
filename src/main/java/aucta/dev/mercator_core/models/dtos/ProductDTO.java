@@ -1,5 +1,6 @@
 package aucta.dev.mercator_core.models.dtos;
 
+import aucta.dev.mercator_core.enums.OrderStatus;
 import aucta.dev.mercator_core.models.Category;
 import aucta.dev.mercator_core.models.User;
 import lombok.Getter;
@@ -40,6 +41,8 @@ public class ProductDTO {
     private Long orderId;
 
     private LocalDateTime orderDate;
+
+    private OrderStatus orderStatus;
 
     private Double totalPrice;
 
