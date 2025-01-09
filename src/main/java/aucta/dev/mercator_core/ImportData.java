@@ -140,6 +140,23 @@ public class ImportData {
                              "<h4>Thanks,&nbsp;</h4>\n" +
                             "<h4>Mercator Team&nbsp;</h4>");
                 }
+                else if (mailTemplatesTypes[i].equals(MailTemplateType.MAIL_TEMPLATE_ORDER_STATUS_CHANGE)){
+                    List<String> params = new ArrayList<>();
+                    params.add("user");
+                    params.add("link");
+                    mailTemplate.setMailTemplateParameters(params);
+                    mailTemplate.setContent("<h1><br></h1>\n" +
+                            " <figure><img src=\"" + BASE_URL + "/logo.png\" height=\"auto\" width=\"auto\"/></figure>\n" +
+                            " <p><br></p>\n" +
+                            " <p>Dear ${user},</p>\n" +
+                            " <p>The status of your order with id: ${orderId} is changed from ${oldStatus} to ${newStatus}.</p>\n" +
+                            " <p><br></p>\n" +
+                            " <p><strong>If you have any question, please contact out Mercator Team.</strong></p>\n" +
+                            "<h4>Thanks,&nbsp;</h4>\n" +
+                            "<h4>Mercator Team&nbsp;</h4>");
+                }
+
+
                 else if (mailTemplatesTypes[i].equals(MailTemplateType.MAIL_TEMPLATE_ANALYZE_COMPANY)){
                     List<String> params = new ArrayList<>();
                     params.add("user");

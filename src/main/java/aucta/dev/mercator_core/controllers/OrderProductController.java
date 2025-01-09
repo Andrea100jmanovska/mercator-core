@@ -100,7 +100,7 @@ public class OrderProductController {
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_CLIENT"})
     @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<OrderedProductResponseDTO> updateOrder(@RequestBody OrderedProduct orderedProduct) throws Exception {
-        return ResponseEntity.ok(orderedProductService.update(orderedProduct));
+    public ResponseEntity<OrderedProductResponseDTO> updateOrder(@RequestBody OrderedProduct orderedProduct, @RequestParam String email) throws Exception {
+        return ResponseEntity.ok(orderedProductService.update(orderedProduct, email));
     }
 }

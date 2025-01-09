@@ -1,23 +1,27 @@
 package aucta.dev.mercator_core.services;
 
-import aucta.dev.mercator_core.enums.CategoryType;
-import aucta.dev.mercator_core.enums.OrderStatus;
-import aucta.dev.mercator_core.enums.SearchOperation;
+import aucta.dev.mercator_core.enums.*;
 import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.*;
 import aucta.dev.mercator_core.models.dtos.*;
+import aucta.dev.mercator_core.repositories.MailTemplateRepository;
 import aucta.dev.mercator_core.repositories.OrderedProductRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
+import aucta.dev.mercator_core.repositories.UserRepository;
 import aucta.dev.mercator_core.repositories.specifications.OrderedProductSpecification;
 import aucta.dev.mercator_core.repositories.specifications.ProductSpecification;
 import aucta.dev.mercator_core.repositories.specifications.SearchCriteria;
+import aucta.dev.mercator_core.utils.BasicSystemSettingsProps;
 import io.micrometer.common.util.StringUtils;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,7 +44,21 @@ public class OrderedProductService {
     private UserService userService;
 
     @Autowired
+    MailMessageService mailMessageService;
+
+    @Autowired
+    SystemSettingsService systemSettingsService;
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @Autowired
+    private MailTemplateRepository mailTemplateRepository;
+
+    @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Transactional
     public OrderedProductResponseDTO placeOrder(List<OrderProductDTO> orderProductDTOs, Double totalAmount) {
@@ -263,17 +281,62 @@ public class OrderedProductService {
         return dto;
     }
 
-    public OrderedProductResponseDTO update(OrderedProduct orderedProduct) {
+    public OrderedProductResponseDTO update(OrderedProduct orderedProduct, String email) {
 
         OrderedProduct existingOrder = orderedProductRepository.findById(orderedProduct.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-
+        User user = userRepository.findFirstByEmail(email);
+        OrderStatus oldStatus = existingOrder.getStatus();
         existingOrder.setStatus(orderedProduct.getStatus());
         orderedProductRepository.save(existingOrder);
+        OrderStatus newStatus = existingOrder.getStatus();
+        MailMessage mailMessage = new MailMessage();
+        mailMessage.setSender(systemSettingsService.getSystemSettingsPropByKey(BasicSystemSettingsProps.SMTP_USERNAME).getValue());
+        mailMessage.setReceivers(List.of(user.getEmail()));
+        mailMessage.setStatus(MailMessageStatus.PENDING);
+        HashMap<String, String> params = new HashMap<>();
+        params.put("subject", "Order Status Changed");
+        params.put("user", user.getFirstName() + " " + user.getLastName());
+        params.put("orderId", existingOrder.getId().toString());
+        params.put("oldStatus", oldStatus.name());
+        params.put("newStatus", newStatus.name());
+        //params.put("link",  BASE_URL + "/activate-user?token=" + encodedToken);
+
+        MailTemplate mailTemplate = mailTemplateRepository.findFirstByTemplateType(MailTemplateType.MAIL_TEMPLATE_ORDER_STATUS_CHANGE);
+        String mailContent = mailTemplate.getContent();
+
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            String placeholder = "${" + entry.getKey() + "}";
+            mailContent = mailContent.replace(placeholder, entry.getValue());
+        }
+
+        if (sendEmailMessage(email, params.get("subject"), mailContent)) {
+            mailMessage.setStatus(MailMessageStatus.SUCCESS);
+        } else {
+            mailMessage.setStatus(MailMessageStatus.FAILED);
+        }
+        mailMessageService.save(mailMessage, MailTemplateType.MAIL_TEMPLATE_ORDER_STATUS_CHANGE, params);
 
         OrderedProductResponseDTO dto = new OrderedProductResponseDTO();
         BeanUtils.copyProperties(existingOrder, dto);
         return dto;
+    }
+
+    public boolean sendEmailMessage(String to, String subject, String text) {
+        MimeMessage message = mailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(systemSettingsService.getSystemSettingsPropByKey(BasicSystemSettingsProps.SMTP_USERNAME).getValue());
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, true);
+
+            mailSender.send(message);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error sending email: " + e.getMessage());
+            return false;
+        }
     }
 
 }
