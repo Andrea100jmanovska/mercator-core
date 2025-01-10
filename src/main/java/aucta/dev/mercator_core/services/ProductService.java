@@ -3,10 +3,7 @@ package aucta.dev.mercator_core.services;
 import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.enums.SearchOperation;
 import aucta.dev.mercator_core.exceptions.BadRequestError;
-import aucta.dev.mercator_core.models.Cart;
-import aucta.dev.mercator_core.models.Category;
-import aucta.dev.mercator_core.models.Image;
-import aucta.dev.mercator_core.models.Product;
+import aucta.dev.mercator_core.models.*;
 import aucta.dev.mercator_core.models.dtos.ImageDTO;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.repositories.CartRepository;
@@ -164,6 +161,78 @@ public class ProductService {
                 .map(product -> {
                     ProductDTO dto = new ProductDTO();
                     BeanUtils.copyProperties(product, dto);
+
+                    dto.setImages(
+                            product.getImages().stream()
+                                    .map(image -> {
+                                        ImageDTO imageDTO = new ImageDTO();
+                                        imageDTO.setId(image.getId());
+                                        imageDTO.setImageData(image.getImageData());
+                                        return imageDTO;
+                                    })
+                                    .collect(Collectors.toList())
+                    );
+
+                    return dto;
+                })
+                .sorted(Comparator.comparing(ProductDTO::getDateCreated).reversed())
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, productsPage.getTotalElements());
+    }
+
+    public Page<ProductDTO> getProductsByCategory(Map<String, String> params, Pageable pageable, Long categoryId) throws Exception {
+        ProductSpecification productSpecification = new ProductSpecification();
+
+        if (categoryId != null) {
+            productSpecification.add(new SearchCriteria("category.id", categoryId, SearchOperation.EQUAL));
+        }
+
+        Iterator<Map.Entry<String, String>> iterator = params.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
+            if (!org.springframework.util.StringUtils.isEmpty(entry.getKey()) && !StringUtils.isEmpty(entry.getValue())) {
+                if (entry.getKey().equals("dateCreated")) {
+                    Calendar from = Calendar.getInstance();
+                    from.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
+                    DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH);
+                    from.setTime(formatter.parse(String.valueOf(entry.getValue())));
+                    from.set(Calendar.HOUR_OF_DAY, 0);
+                    from.set(Calendar.MINUTE, 0);
+                    from.set(Calendar.SECOND, 0);
+                    from.set(Calendar.MILLISECOND, 0);
+
+                    Calendar to = Calendar.getInstance();
+                    to.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
+                    to.setTime(formatter.parse(String.valueOf(entry.getValue())));
+                    to.set(Calendar.HOUR_OF_DAY, 0);
+                    to.set(Calendar.MINUTE, 0);
+                    to.set(Calendar.SECOND, 0);
+                    to.set(Calendar.MILLISECOND, 0);
+                    to.add(Calendar.HOUR, 23);
+                    to.add(Calendar.MINUTE, 59);
+                    to.add(Calendar.SECOND, 59);
+
+                    productSpecification.add(new SearchCriteria(entry.getKey(), from.getTime(), SearchOperation.JAVA_UTIL_DATE_GREATER_THAN_EQUAL));
+                    productSpecification.add(new SearchCriteria(entry.getKey(), to.getTime(), SearchOperation.JAVA_UTIL_DATE_LESS_THAN_EQUAL));
+                } else {
+                    productSpecification.add(new SearchCriteria(entry.getKey(), entry.getValue(), SearchOperation.MATCH));
+                }
+            }
+        }
+
+        Cart cart = cartRepository.findByUserId(userService.getUser().getId()).orElse(null);
+        Page<Product> productsPage = productRepository.findAll(productSpecification, pageable);
+
+        List<Product> productsInCart = cart != null ? cart.getCartProducts() : new ArrayList<>();
+
+        List<ProductDTO> dtos = productsPage.getContent().stream()
+                .map(product -> {
+                    ProductDTO dto = new ProductDTO();
+                    BeanUtils.copyProperties(product, dto);
+                    dto.setIsFavorited(product.getUsers().contains(userService.getCurrentUser()));
+                    dto.setIsInCart(productsInCart.contains(product));
+                    dto.setAverageRating(product.getAverageRating());
 
                     dto.setImages(
                             product.getImages().stream()

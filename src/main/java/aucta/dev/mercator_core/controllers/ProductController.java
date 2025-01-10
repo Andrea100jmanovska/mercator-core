@@ -9,6 +9,7 @@ import aucta.dev.mercator_core.services.ProductService;
 import aucta.dev.mercator_core.validators.ProductValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -71,6 +72,27 @@ public class ProductController {
         }
         return ResponseEntity.ok(productService.getAllPublic(filterMap, PageRequest.of(page, size, sort)));
     }
+
+    @GetMapping("/category")
+    public ResponseEntity getProductsByCategory(@RequestParam(value = "page") Integer page,
+                                               @RequestParam(value = "size") Integer size,
+                                               @RequestParam(value = "orderBy") String orderBy,
+                                               @RequestParam(value = "orderDirection") String orderDirection,
+                                               @RequestParam(value = "searchParams") String searchParams,
+                                                @RequestParam Long categoryId
+    ) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        HashMap filterMap = objectMapper.readValue(searchParams, HashMap.class);
+        Sort sort;
+        if (orderBy != null && orderDirection != null) {
+            sort = Sort.by(orderDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC, orderBy);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "dateCreated");
+        }
+        return ResponseEntity.ok(productService.getProductsByCategory(filterMap, PageRequest.of(page, size, sort), categoryId));
+
+    }
+
 
     @Secured({"ROLE_ADMINISTRATION", "ROLE_MERCATOR_AGENT", "ROLE_CLIENT"})
     @RequestMapping(path = "/all",method = RequestMethod.GET)
