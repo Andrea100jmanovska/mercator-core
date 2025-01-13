@@ -181,6 +181,7 @@ public class ProductService {
         return new PageImpl<>(dtos, pageable, productsPage.getTotalElements());
     }
 
+    @Transactional
     public Page<ProductDTO> getProductsByCategory(Map<String, String> params, Pageable pageable, Long categoryId) throws Exception {
         ProductSpecification productSpecification = new ProductSpecification();
 
