@@ -219,6 +219,9 @@ public class OrderedProductService {
 
                     orderedProductSpecification.add(new SearchCriteria(entry.getKey(), from.getTime(), SearchOperation.JAVA_UTIL_DATE_GREATER_THAN_EQUAL));
                     orderedProductSpecification.add(new SearchCriteria(entry.getKey(), to.getTime(), SearchOperation.JAVA_UTIL_DATE_LESS_THAN_EQUAL));
+                }else if (entry.getKey().equals("id")) {
+                    Long idValue = Long.parseLong(entry.getValue());
+                    orderedProductSpecification.add(new SearchCriteria(entry.getKey(), idValue, SearchOperation.EQUAL));
                 } else {
                     orderedProductSpecification.add(new SearchCriteria(entry.getKey(), entry.getValue(), SearchOperation.MATCH));
                 }
