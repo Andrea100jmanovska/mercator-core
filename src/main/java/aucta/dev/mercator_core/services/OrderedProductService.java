@@ -152,8 +152,50 @@ public class OrderedProductService {
 
     @Transactional
     public Page<ProductDTO> getOrderedProductsByUserPageable(Map<String, String> params, Pageable pageable) throws Exception {
+        OrderedProductSpecification orderedProductSpecification = new OrderedProductSpecification();
 
-        List<OrderedProduct> orderedProducts = orderedProductRepository.findByUser(userService.getCurrentUser());
+        // Add base specification for current user
+        User currentUser = userService.getCurrentUser();
+        orderedProductSpecification.add(new SearchCriteria("user", currentUser, SearchOperation.EQUAL));
+
+        // Handle other search parameters
+        Iterator<Map.Entry<String, String>> iterator = params.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
+            if (!org.springframework.util.StringUtils.isEmpty(entry.getKey()) && !StringUtils.isEmpty(entry.getValue())) {
+                if (entry.getKey().equals("dateCreated")) {
+                    Calendar from = Calendar.getInstance();
+                    from.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
+                    DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH);
+                    from.setTime(formatter.parse(String.valueOf(entry.getValue())));
+                    from.set(Calendar.HOUR_OF_DAY, 0);
+                    from.set(Calendar.MINUTE, 0);
+                    from.set(Calendar.SECOND, 0);
+                    from.set(Calendar.MILLISECOND, 0);
+
+                    Calendar to = Calendar.getInstance();
+                    to.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
+                    to.setTime(formatter.parse(String.valueOf(entry.getValue())));
+                    to.set(Calendar.HOUR_OF_DAY, 0);
+                    to.set(Calendar.MINUTE, 0);
+                    to.set(Calendar.SECOND, 0);
+                    to.set(Calendar.MILLISECOND, 0);
+                    to.add(Calendar.HOUR, 23);
+                    to.add(Calendar.MINUTE, 59);
+                    to.add(Calendar.SECOND, 59);
+
+                    orderedProductSpecification.add(new SearchCriteria(entry.getKey(), from.getTime(), SearchOperation.JAVA_UTIL_DATE_GREATER_THAN_EQUAL));
+                    orderedProductSpecification.add(new SearchCriteria(entry.getKey(), to.getTime(), SearchOperation.JAVA_UTIL_DATE_LESS_THAN_EQUAL));
+                } else if (entry.getKey().equals("id")) {
+                    Long idValue = Long.parseLong(entry.getValue());
+                    orderedProductSpecification.add(new SearchCriteria(entry.getKey(), idValue, SearchOperation.EQUAL));
+                } else {
+                    orderedProductSpecification.add(new SearchCriteria(entry.getKey(), entry.getValue(), SearchOperation.MATCH));
+                }
+            }
+        }
+
+        List<OrderedProduct> orderedProducts = orderedProductRepository.findAll(orderedProductSpecification);
 
         List<ProductDTO> dtos = new ArrayList<>();
 
