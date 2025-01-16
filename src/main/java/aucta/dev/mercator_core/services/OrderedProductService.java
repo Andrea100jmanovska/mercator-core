@@ -154,16 +154,14 @@ public class OrderedProductService {
     public Page<ProductDTO> getOrderedProductsByUserPageable(Map<String, String> params, Pageable pageable) throws Exception {
         OrderedProductSpecification orderedProductSpecification = new OrderedProductSpecification();
 
-        // Add base specification for current user
         User currentUser = userService.getCurrentUser();
         orderedProductSpecification.add(new SearchCriteria("user", currentUser, SearchOperation.EQUAL));
 
-        // Handle other search parameters
         Iterator<Map.Entry<String, String>> iterator = params.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
             if (!org.springframework.util.StringUtils.isEmpty(entry.getKey()) && !StringUtils.isEmpty(entry.getValue())) {
-                if (entry.getKey().equals("dateCreated")) {
+                if (entry.getKey().equals("orderDate")) {
                     Calendar from = Calendar.getInstance();
                     from.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
                     DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH);
@@ -238,7 +236,7 @@ public class OrderedProductService {
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
             if (!org.springframework.util.StringUtils.isEmpty(entry.getKey()) && !StringUtils.isEmpty(entry.getValue())) {
-                if (entry.getKey().equals("dateCreated")) {
+                if (entry.getKey().equals("orderDate")) {
                     Calendar from = Calendar.getInstance();
                     from.setTimeZone(TimeZone.getTimeZone("Europe/Skopje"));
                     DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH);
