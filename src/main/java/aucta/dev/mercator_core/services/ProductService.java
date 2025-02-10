@@ -1,15 +1,13 @@
 package aucta.dev.mercator_core.services;
 
 import aucta.dev.mercator_core.enums.CategoryType;
+import aucta.dev.mercator_core.enums.ColorType;
 import aucta.dev.mercator_core.enums.SearchOperation;
 import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.*;
 import aucta.dev.mercator_core.models.dtos.ImageDTO;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
-import aucta.dev.mercator_core.repositories.CartRepository;
-import aucta.dev.mercator_core.repositories.CategoryRepository;
-import aucta.dev.mercator_core.repositories.ImageRepository;
-import aucta.dev.mercator_core.repositories.ProductRepository;
+import aucta.dev.mercator_core.repositories.*;
 import aucta.dev.mercator_core.repositories.specifications.ProductSpecification;
 import aucta.dev.mercator_core.repositories.specifications.SearchCriteria;
 import io.micrometer.common.util.StringUtils;
@@ -264,10 +262,11 @@ public class ProductService {
                                  String description,
                                  Double price,
                                  Integer discount,
+                                 String size,
                                  Integer quantity,
                                  CategoryType categoryType,
                                  Double deliveryPrice,
-                                 List<MultipartFile> images) throws BadRequestError, IOException {
+                                 List<MultipartFile> images, List<ColorType> colors) throws BadRequestError, IOException {
         Category category = categoryRepository.findByCategoryType(categoryType)
                 .orElseThrow(() -> new BadRequestError("Invalid category"));
 
@@ -277,10 +276,14 @@ public class ProductService {
         product.setPrice(price);
         product.setDiscount(discount);
         product.setQuantity(quantity);
+        product.setSize(size);
         product.setCategory(category);
         product.setDeliveryPrice(deliveryPrice);
         product.setTotalPrice((1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice());
         product.setUser(userService.getCurrentUser());
+        if (colors != null && !colors.isEmpty()) {
+            product.setColors(colors);
+        }
 
         if (images != null && !images.isEmpty()) {
             for (MultipartFile image : images) {
@@ -354,9 +357,10 @@ public class ProductService {
                           Double price,
                           Integer discount,
                           Integer quantity,
+                          String size,
                           CategoryType categoryType,
                           Double deliveryPrice,
-                          List<MultipartFile> images) throws IOException, BadRequestError {
+                          List<MultipartFile> images, List<ColorType> colors) throws IOException, BadRequestError {
 
         Product existingProduct = productRepository.findById(product.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
@@ -369,8 +373,11 @@ public class ProductService {
         existingProduct.setDiscount(discount);
         existingProduct.setQuantity(quantity);
         existingProduct.setCategory(category);
+        existingProduct.setSize(size);
         existingProduct.setDeliveryPrice(deliveryPrice);
-
+        if (colors != null && !colors.isEmpty()) {
+            existingProduct.setColors(colors);
+        }
         existingProduct.setTotalPrice(
                 (1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice()
         );

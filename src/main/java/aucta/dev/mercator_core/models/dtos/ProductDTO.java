@@ -1,5 +1,7 @@
 package aucta.dev.mercator_core.models.dtos;
 
+import aucta.dev.mercator_core.enums.CategoryType;
+import aucta.dev.mercator_core.enums.ColorType;
 import aucta.dev.mercator_core.enums.OrderStatus;
 import aucta.dev.mercator_core.models.Category;
 import aucta.dev.mercator_core.models.User;
@@ -28,6 +30,8 @@ public class ProductDTO {
 
     private Double price;
 
+    private String size;
+
     private Date dateCreated;
 
     private Double averageRating;
@@ -55,6 +59,8 @@ public class ProductDTO {
     private List<CommentDTO> comments = new ArrayList<>();
 
     private List<ImageDTO> images = new ArrayList<>();
+
+    private List<ColorType> colors = new ArrayList<>();
 
     private User user;
 

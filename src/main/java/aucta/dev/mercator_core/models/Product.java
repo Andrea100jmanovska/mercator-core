@@ -1,5 +1,6 @@
 package aucta.dev.mercator_core.models;
 
+import aucta.dev.mercator_core.enums.ColorType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -29,6 +30,9 @@ public class Product extends AbstractEntity implements Serializable {
     @Column(name = "QUANTITY")
     private Integer quantity;
 
+    @Column(name = "SIZE")
+    private String size;
+
     @Column(name = "DISCOUNT")
     private Integer discount;
 
@@ -54,6 +58,11 @@ public class Product extends AbstractEntity implements Serializable {
     @ManyToOne
     @JoinColumn(name = "CATEGORY_ID")
     private Category category;
+
+    @Column(name = "COLOR")
+    @ElementCollection(targetClass = ColorType.class)
+    @Enumerated(EnumType.STRING)
+    private List<ColorType> colors;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

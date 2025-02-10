@@ -1,6 +1,7 @@
 package aucta.dev.mercator_core.controllers;
 
 import aucta.dev.mercator_core.enums.CategoryType;
+import aucta.dev.mercator_core.enums.ColorType;
 import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.dtos.ProductDTO;
@@ -113,13 +114,15 @@ public class ProductController {
             @RequestParam("description") String description,
             @RequestParam("price") Double price,
             @RequestParam("discount") Integer discount,
+            @RequestParam("size") String size,
             @RequestParam("quantity") Integer quantity,
             @RequestParam("category") CategoryType categoryType,
             @RequestParam("deliveryPrice") Double deliveryPrice,
-            @RequestParam("images") List<MultipartFile> images
+            @RequestParam("images") List<MultipartFile> images,
+            @RequestParam("colors") List<ColorType> colors
     ) throws BadRequestError, IOException {
 
-            Product product = productService.createProduct(name, description, price, discount, quantity, categoryType, deliveryPrice, images);
+            Product product = productService.createProduct(name, description, price, discount, size, quantity, categoryType, deliveryPrice, images, colors);
             productValidator.createProductValidation(product);
             return ResponseEntity.ok(productRepository.save(product));
 
@@ -134,15 +137,17 @@ public class ProductController {
             @RequestParam("price") Double price,
             @RequestParam("discount") Integer discount,
             @RequestParam("quantity") Integer quantity,
+            @RequestParam("size") String size,
             @RequestParam("category") CategoryType categoryType,
             @RequestParam("deliveryPrice") Double deliveryPrice,
-            @RequestParam(value = "images", required = false) List<MultipartFile> images
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam(value = "colors") List<ColorType> colors
     ) throws Exception {
 
         Product product = productService.getById(id);
         productValidator.updateProductValidation(product);
 
-        Product updatedProduct = productService.update(product, name, description, price, discount, quantity, categoryType, deliveryPrice, images);
+        Product updatedProduct = productService.update(product, name, description, price, discount, quantity,size, categoryType, deliveryPrice, images, colors);
         ProductDTO dto = productService.convertToDto(updatedProduct);
 
         return ResponseEntity.ok(dto);
