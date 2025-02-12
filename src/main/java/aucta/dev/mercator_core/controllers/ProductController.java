@@ -114,7 +114,7 @@ public class ProductController {
             @RequestParam("description") String description,
             @RequestParam("price") Double price,
             @RequestParam("discount") Integer discount,
-            @RequestParam("size") String size,
+            @RequestParam("sizes") List<String> sizes,
             @RequestParam("quantity") Integer quantity,
             @RequestParam("category") CategoryType categoryType,
             @RequestParam("deliveryPrice") Double deliveryPrice,
@@ -122,7 +122,7 @@ public class ProductController {
             @RequestParam("colors") List<ColorType> colors
     ) throws BadRequestError, IOException {
 
-            Product product = productService.createProduct(name, description, price, discount, size, quantity, categoryType, deliveryPrice, images, colors);
+            Product product = productService.createProduct(name, description, price, discount, sizes, quantity, categoryType, deliveryPrice, images, colors);
             productValidator.createProductValidation(product);
             return ResponseEntity.ok(productRepository.save(product));
 
@@ -137,7 +137,7 @@ public class ProductController {
             @RequestParam("price") Double price,
             @RequestParam("discount") Integer discount,
             @RequestParam("quantity") Integer quantity,
-            @RequestParam("size") String size,
+            @RequestParam("sizes") List<String> sizes,
             @RequestParam("category") CategoryType categoryType,
             @RequestParam("deliveryPrice") Double deliveryPrice,
             @RequestParam(value = "images", required = false) List<MultipartFile> images,
@@ -147,7 +147,7 @@ public class ProductController {
         Product product = productService.getById(id);
         productValidator.updateProductValidation(product);
 
-        Product updatedProduct = productService.update(product, name, description, price, discount, quantity,size, categoryType, deliveryPrice, images, colors);
+        Product updatedProduct = productService.update(product, name, description, price, discount, quantity,sizes, categoryType, deliveryPrice, images, colors);
         ProductDTO dto = productService.convertToDto(updatedProduct);
 
         return ResponseEntity.ok(dto);

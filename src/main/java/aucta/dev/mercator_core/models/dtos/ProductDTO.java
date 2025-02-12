@@ -30,7 +30,7 @@ public class ProductDTO {
 
     private Double price;
 
-    private String size;
+    private List<String> sizes;
 
     private Date dateCreated;
 

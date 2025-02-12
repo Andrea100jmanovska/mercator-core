@@ -262,7 +262,7 @@ public class ProductService {
                                  String description,
                                  Double price,
                                  Integer discount,
-                                 String size,
+                                  List<String> sizes,
                                  Integer quantity,
                                  CategoryType categoryType,
                                  Double deliveryPrice,
@@ -276,13 +276,15 @@ public class ProductService {
         product.setPrice(price);
         product.setDiscount(discount);
         product.setQuantity(quantity);
-        product.setSize(size);
         product.setCategory(category);
         product.setDeliveryPrice(deliveryPrice);
         product.setTotalPrice((1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice());
         product.setUser(userService.getCurrentUser());
         if (colors != null && !colors.isEmpty()) {
             product.setColors(colors);
+        }
+        if (sizes != null && !sizes.isEmpty()) {
+            product.setSizes(sizes);
         }
 
         if (images != null && !images.isEmpty()) {
@@ -357,7 +359,7 @@ public class ProductService {
                           Double price,
                           Integer discount,
                           Integer quantity,
-                          String size,
+                          List<String> sizes,
                           CategoryType categoryType,
                           Double deliveryPrice,
                           List<MultipartFile> images, List<ColorType> colors) throws IOException, BadRequestError {
@@ -373,10 +375,12 @@ public class ProductService {
         existingProduct.setDiscount(discount);
         existingProduct.setQuantity(quantity);
         existingProduct.setCategory(category);
-        existingProduct.setSize(size);
         existingProduct.setDeliveryPrice(deliveryPrice);
         if (colors != null && !colors.isEmpty()) {
             existingProduct.setColors(colors);
+        }
+        if (sizes != null && !sizes.isEmpty()) {
+            existingProduct.setSizes(sizes);
         }
         existingProduct.setTotalPrice(
                 (1 - (product.getDiscount() / 100.00)) * product.getPrice() + product.getDeliveryPrice()

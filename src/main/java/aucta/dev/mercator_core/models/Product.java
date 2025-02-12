@@ -30,8 +30,10 @@ public class Product extends AbstractEntity implements Serializable {
     @Column(name = "QUANTITY")
     private Integer quantity;
 
-    @Column(name = "SIZE")
-    private String size;
+    @ElementCollection
+    @CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "sizes")
+    private List<String> sizes;
 
     @Column(name = "DISCOUNT")
     private Integer discount;
