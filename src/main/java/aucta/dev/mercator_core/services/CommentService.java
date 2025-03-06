@@ -2,17 +2,12 @@ package aucta.dev.mercator_core.services;
 
 import aucta.dev.mercator_core.models.*;
 import aucta.dev.mercator_core.models.dtos.CommentDTO;
-import aucta.dev.mercator_core.models.dtos.ImageDTO;
-import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.repositories.CommentRepository;
 import aucta.dev.mercator_core.repositories.ProductRepository;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

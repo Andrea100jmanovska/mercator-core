@@ -1,6 +1,5 @@
 package aucta.dev.mercator_core.repositories;
 
-
 import aucta.dev.mercator_core.enums.CategoryType;
 import aucta.dev.mercator_core.models.Category;
 import org.springframework.data.jpa.repository.JpaRepository;

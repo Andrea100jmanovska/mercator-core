@@ -10,7 +10,6 @@ import aucta.dev.mercator_core.services.ProductService;
 import aucta.dev.mercator_core.validators.ProductValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;

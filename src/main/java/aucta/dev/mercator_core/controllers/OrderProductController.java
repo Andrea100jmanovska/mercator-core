@@ -1,14 +1,9 @@
 package aucta.dev.mercator_core.controllers;
 
-import aucta.dev.mercator_core.enums.CategoryType;
-import aucta.dev.mercator_core.enums.OrderStatus;
-import aucta.dev.mercator_core.exceptions.BadRequestError;
 import aucta.dev.mercator_core.models.OrderedProduct;
-import aucta.dev.mercator_core.models.Product;
 import aucta.dev.mercator_core.models.User;
 import aucta.dev.mercator_core.models.dtos.OrderProductDTO;
 import aucta.dev.mercator_core.models.dtos.OrderedProductResponseDTO;
-import aucta.dev.mercator_core.models.dtos.ProductDTO;
 import aucta.dev.mercator_core.repositories.OrderedProductRepository;
 import aucta.dev.mercator_core.services.OrderedProductService;
 import aucta.dev.mercator_core.services.UserService;
@@ -19,7 +14,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;

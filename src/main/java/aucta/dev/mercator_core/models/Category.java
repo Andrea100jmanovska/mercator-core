@@ -1,6 +1,5 @@
 package aucta.dev.mercator_core.models;
 
-
 import aucta.dev.mercator_core.enums.CategoryType;
 import jakarta.persistence.*;
 import lombok.Getter;
