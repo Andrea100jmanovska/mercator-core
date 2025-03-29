@@ -202,6 +202,7 @@ public class OrderedProductService {
                 ProductDTO dto = new ProductDTO();
                 BeanUtils.copyProperties(product, dto);
                 dto.setOrderId(order.getId());
+                dto.setOrderStatus(order.getStatus());
                 dto.setOrderDate(order.getOrderDate());
                 dto.setImages(
                         product.getImages().stream()
